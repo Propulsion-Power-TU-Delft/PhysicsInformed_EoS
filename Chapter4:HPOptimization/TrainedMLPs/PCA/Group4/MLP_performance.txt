@@ -1,7 +1,7 @@
-Training time[minutes]: +4.270e+01
-Validation score: +2.2580310178454965e-04
+Training time[minutes]: +2.500e+01
+Validation score: +2.1327724971342832e-04
 Total neuron count:  172
-Evaluation time[seconds]: +5.854e-01
+Evaluation time[seconds]: +2.428e-01
 Evaluation cost parameter: +4.120000e+03
 Alpha exponent: -2.7999999999999998e+00
 Learning rate decay: +9.8958999999999997e-01

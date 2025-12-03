@@ -1,5 +1,5 @@
-Training time[minutes]: +1.105e+01
-Validation score: +7.5825765728950500e-02
+Training time[minutes]: +6.525e+01
+Validation score: +1.5399685129523277e-02
 Total neuron count:  172
 Evaluation time[seconds]: +0.000e+00
 Evaluation cost parameter: +4.120000e+03
