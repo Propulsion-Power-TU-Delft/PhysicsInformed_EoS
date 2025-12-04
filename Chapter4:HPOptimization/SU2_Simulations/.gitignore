@@ -1,0 +1,9 @@
+su2mesh.su2 
+Pareto/flow_v0565_Tw450_PINN/** 
+Pareto/flow_v0565_Tw450_PINN.vtm 
+Pareto/restart.dat 
+Pareto/history_v0565_Tw450_PINN.csv
+Unoptimized/flow_v0565_Tw450_PINN/** 
+Unoptimized/flow_v0565_Tw450_PINN.vtm 
+Unoptimized/restart_v0565_Tw450_PINN.dat
+Unoptimized/history_v0565_Tw450_PINN.csv
