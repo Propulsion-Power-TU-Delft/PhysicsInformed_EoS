@@ -1,0 +1,10 @@
+AdjointEEoS/*
+!AdjointEEoS/config_AD.cfg 
+AdjointPRGas/*
+!AdjointPRGas/config_AD.cfg
+CoolProp/*
+!CoolProp/config_JST_direct.cfg
+EEoS/*
+!EEoS/config_JST.cfg 
+PRGas/*
+!PRGas/config_JST.cfg
