@@ -1,0 +1,16 @@
+*
+!.gitignore
+!MLP_Group1.mlp 
+!MLP_Group2.mlp 
+!MLP_Group3.mlp 
+!MLP_Group4.mlp 
+!MLP_Group5.mlp 
+!MLP_NULL.mlp 
+!optimization.py
+!remeshing_script.py 
+!copy_ffdb_n.py 
+!check_mesh_quality.py 
+!master.cfg 
+!fluid.cfg 
+!solid_burner.cfg 
+!solid_hex.cfg 

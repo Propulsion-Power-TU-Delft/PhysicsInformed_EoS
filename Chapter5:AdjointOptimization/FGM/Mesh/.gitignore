@@ -1,0 +1,7 @@
+*
+!.gitignore
+!fluid.cfg
+!master.cfg 
+!solid_burner.cfg 
+!solid_hex.cfg 
+!generate_mesh.py 

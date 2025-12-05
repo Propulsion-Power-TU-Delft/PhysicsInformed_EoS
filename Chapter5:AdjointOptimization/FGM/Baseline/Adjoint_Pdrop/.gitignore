@@ -1,0 +1,6 @@
+*
+!.gitignore
+!master.cfg 
+!fluid.cfg 
+!solid_burner.cfg 
+!solid_hex.cfg 
