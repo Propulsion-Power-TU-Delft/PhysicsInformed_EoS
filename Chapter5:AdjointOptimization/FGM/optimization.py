@@ -8,8 +8,8 @@ dx = 1e-8
 lb = np.ones(nDV)
 ub = np.ones(nDV)
 for i in range(nDV):
-    lb[i] = -1e-4
-    ub[i] = 1e-4
+    lb[i] = -1.5e-4
+    ub[i] = 1.5e-4
 ffd = InputVariable(0.0,PreStringHandler("DV_VALUE="),size=nDV, lb=-1.5e-4, ub=1.5e-4)
 OBJFUNC_NAMES=["avg_p_inlet_scaled", "avg_temp_outlet_scaled"]
 OBJFUNC_NAME="avg_p_inlet"
@@ -154,9 +154,9 @@ driver.setStorageMode(True,"DSN_r1_")
 import scipy.optimize
 
 if restart:
-  his = open("doe.csv",'a+')
+  his = open("doe.csv",'a+',1)
 else:
-  his = open("doe.csv",'w+')
+  his = open("doe.csv",'w+',1)
 
 driver.setHistorian(his)
 driver.preprocess()

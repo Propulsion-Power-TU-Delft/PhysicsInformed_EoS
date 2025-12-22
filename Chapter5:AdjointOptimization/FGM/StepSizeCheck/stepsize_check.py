@@ -1,7 +1,9 @@
 # FADO script: Finite Differences vs adjoint run
 import sys 
+import csv
 import math
 import pandas as pd
+import matplotlib.pyplot as plt 
 from FADO import *
 
 # Design variables ----------------------------------------------------- #
@@ -148,86 +150,62 @@ driver = ExteriorPenaltyDriver(0.005)
 driver.addObjective("min", functions[OBJFUNC_NAMES.index("avg_p_inlet_scaled")], 1e-7)
 driver.addEquality(functions[OBJFUNC_NAMES.index("avg_temp_outlet_scaled")], 1.0)
 
-driver.setWorkingDirectory("DOE")
-driver.preprocessVariables()
-driver.setStorageMode(True,"DSN_")
 
-his = open("doe.csv","w",1)
+step_sizes = np.logspace(-14, -4, 15,base=10)
+DAvals_temp = np.loadtxt("../Baseline/Adjoint_Tout/of_grad.csv",skiprows=1)
+DAvals_p = np.loadtxt("../Baseline/Adjoint_Pdrop/of_grad.csv",skiprows=1)
+avg_grad = 0.5*(DAvals_temp + DAvals_p)
+ivar = np.argmax(avg_grad)
+
+doe_file = "doe_%i.csv" % ivar
+
+driver.setWorkingDirectory("DOE_%i" % ivar)
+driver.preprocessVariables()
+driver.setStorageMode(True,"DSN_%i_" % ivar)
+
+his = open(doe_file,"w",1)
 driver.setHistorian(his)
 
-# print("Computing baseline primal")
+# # print("Computing baseline primal")
 x = driver.getInitial()
 driver.fun(x) # baseline evaluation
 
-# Compute discrete adjoint gradient
-print("Computing discrete adjoint gradient")
-driver.grad(x)
+for s in step_sizes:
+  x = driver.getInitial()
+  x[ivar] += s 
+  driver.fun(x)
 
-# Primal simulation for each deformed DV
-for iLoop in range(nDV):
-    print("Computing deformed primal ", iLoop, "/", nDV-1)
-    x = driver.getInitial()
-    x[iLoop] = dx 
-    driver.fun(x)
-    
-#end
-
-
-def printGradVal(FDgrad, DAgrad):
-  """
-  Print Gradient Comparison to screen between DA and FD.
-
-  Input:
-  FDgrad: array with the Finite Difference gradient
-  DAgrad: array with the Discrete Adjoint gradient
-  """
-  # Check that both arrays have the same length and deduce a size parameter
-  assert(DAgrad.size == FDgrad.size)
-
-  # absolute difference
-  absoluteDiff = DAgrad - FDgrad
-  # relative difference in percent
-  relDiffPercent = (DAgrad - FDgrad)/abs(DAgrad) * 100
-  # sign change
-  sign = lambda x : math.copysign(1, x)
-  signChange = [sign(DA) != sign(FD) for DA,FD in zip(DAgrad,FDgrad)]
-
-  print('+-----------+-------------------+-------------------+-------------------+-------------------+-------------+')
-  print('| DV number |       DA gradient |       FD gradient |     absolute diff | relative diff [%] | sign change |')
-  print('+-----------+-------------------+-------------------+-------------------+-------------------+-------------+')
-
-  for iDV in range(0, DAgrad.size, 1):
-      print('|{0:10d} |{1:18.10f} |{2:18.10f} |{3:18.10f} |{4:18.10f} |{5:12} |'.format(iDV, DAgrad[iDV], FDgrad[iDV], absoluteDiff[iDV], relDiffPercent[iDV], signChange[iDV]))
-
-  print('+-----------+-------------------+-------------------+-------------------+-------------------+-------------+')
-
-# Load Discrete Adjont gradient
-DAvals_temp = pd.read_csv("../Baseline/Adjoint_Tout/of_grad.csv")
-DAvals_p = pd.read_csv("../Baseline/Adjoint_Pdrop/of_grad.csv")
-
-DAstring_specVar ='CUSTOM_OBJFUNC gradient '
-
-DAgrad_temp = DAvals_temp[DAstring_specVar].values
-DAgrad_p = DAvals_p[DAstring_specVar].values
-#nDV = DAgrad_p.size
-
-# Load primal values and create FD gradient
-FDvals = np.loadtxt("doe.csv",delimiter=',',skiprows=1)
+FDvals = np.loadtxt(doe_file,delimiter=',',skiprows=1)
 
 FDvals_temp = FDvals[:,2]
 FDvals_p = FDvals[:,1]
+dTemp_dx_FD = (FDvals_temp[1:] - FDvals_temp[0])/step_sizes 
+dPdrop_dx_FD = (FDvals_p[1:] - FDvals_p[0])/step_sizes 
 
-  
-# Note that the FDvals have the baseline value written in its last position
-FDgrad_temp = (FDvals_temp[1:] - FDvals_temp[0]) / dx
-FDgrad_p = (FDvals_p[1:] - FDvals_p[0]) / dx
+dTemp_dx_AD = DAvals_temp[ivar]
+dPdrop_dx_AD = DAvals_p[ivar]
 
-diff_grad_temp = ((DAgrad_temp - FDgrad_temp)/FDgrad_temp)
-diff_grad_p = ((DAgrad_p - FDgrad_p)/FDgrad_p)
+diff_dTempdX = 100*(dTemp_dx_FD - dTemp_dx_AD)/dTemp_dx_AD
+diff_dPdropdX = 100*(dPdrop_dx_FD - dPdrop_dx_AD)/dPdrop_dx_AD
+print(diff_dTempdX)
+print(diff_dPdropdX)
 
-ix = np.arange(nDV)
-np.random.shuffle(ix)
-
-for j,i in enumerate(ix[:12]):
-  print("%i & $\SI{%+.3e}{}$ & $\SI{%+.3e}{}$ \\\\"% ((j+1), 100*diff_grad_p[i], 100*diff_grad_temp[i]))
-
+stepsize_study_data = np.vstack((step_sizes,diff_dTempdX,diff_dPdropdX)).T 
+with open("Stepsize_diff.csv","w") as fid:
+   fid.write("Step size, diff_dToutdX, diff_dPdropdX\n")
+   csvwriter = csv.writer(fid,delimiter=',')
+   csvwriter.writerows(stepsize_study_data)
+fsize=20
+fig = plt.figure(figsize=[10,10])
+ax = plt.axes()
+ax.plot(step_sizes, np.abs(diff_dTempdX),label="difference temperature objective")
+ax.plot(step_sizes, np.abs(diff_dPdropdX),label="difference pressure objective")
+ax.set_xscale('log')
+ax.set_yscale('log')
+ax.grid()
+ax.legend(fontsize=fsize)
+ax.tick_params(which='both',labelsize=fsize)
+ax.set_xlabel("FD step size [m]",fontsize=fsize)
+ax.set_ylabel("Difference between AD and FD",fontsize=fsize)
+fig.savefig("Stepsize_check.eps",format='eps',bbox_inches='tight')
+plt.show()
