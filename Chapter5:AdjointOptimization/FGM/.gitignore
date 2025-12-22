@@ -2,6 +2,7 @@
 !.gitignore
 !GradientValidation/*
 !Baseline/*
+!ComputationTime/**
 !MLP_Group1.mlp 
 !MLP_Group2.mlp 
 !MLP_Group3.mlp 
