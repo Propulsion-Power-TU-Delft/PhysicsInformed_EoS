@@ -1,3 +1,4 @@
+#! /usr/env/bin/python 
 # Generate SU2 DataMiner configurations for comparing the accuracy and consistency 
 # between using data-fitting and physics-informed training.
 

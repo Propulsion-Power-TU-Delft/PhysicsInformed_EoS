@@ -1,4 +1,5 @@
 
+# Train the ML-FGM networks on the flamelet training data sets with and without the physics-informed penalty functions.
 from su2dataminer.config import Config_FGM
 from su2dataminer.manifold import TrainMLP_FGM
 

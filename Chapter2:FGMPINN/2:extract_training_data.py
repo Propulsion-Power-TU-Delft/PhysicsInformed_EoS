@@ -1,10 +1,11 @@
-
+# Extract training data sets from flamelet solutions.
 from su2dataminer.config import Config_FGM
 from su2dataminer.process_data import FlameletConcatenator
 
+# Load SU2 DataMiner configuration
 Config = Config_FGM("config_PIML.cfg")
 
-# Mine flamelet data to construct training data sets.
+# Specify training data set options.
 FC = FlameletConcatenator(Config)
 FC.SetNFlameletNodes(2**Config.GetBatchExpo())
 FC.IgnoreMixtureBounds(True)
