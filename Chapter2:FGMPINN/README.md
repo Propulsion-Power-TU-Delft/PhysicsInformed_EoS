@@ -24,7 +24,7 @@ Running this script generates the configuration file named *config_PIML.cfg* and
 Step 2: Generate flamelet data
 ------------------------------
 
-The next step involves the generation of flamelet data used to train the networks of the ML-FGM model. In the script[1:generate_flamelet_data.py](1:generate_flamelet_data.py), the user can specify the number of cores used to calculate the flamelets. Information regarding the progress of the flamelet data calculation is displayed in the terminal during calculation.
+The next step involves the generation of flamelet data used to train the networks of the ML-FGM model. In the script[1:generate_flamelet_data.py](1:generate_flamelet_data.py), the user can specify the number of cores used to calculate the flamelets. Information regarding the progress of the flamelet data calculation is displayed in the terminal during calculation. The reaction mechanism used to calculate the flamelet solutions is called [stanford.yaml](stanford.yaml) and can be loaded in Cantera for themochemical state calculations.
 
 The flamelet solutions are stored in the folder *flamelet_data*, in which the solutions for each flamelet type are stored in appropriately named sub-folders for each equivalence ratio and mixture fraction. Individual flamelet solutions can be visually inspected by running 
 ```
