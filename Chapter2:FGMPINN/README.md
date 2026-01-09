@@ -38,6 +38,8 @@ After calculating the flamelet solutions, the ML-FGM training data sets are defi
 
 80% of the randomly sampled flamelet data are used for training, 10% for testing, and the remaining 10% for validation. Each data set is stored in the *flamelet_data* folder with appropriate extensions. Additionally, training data sets are generated on which the physics-informed penalty functions are evaluated which contain only chemical equilibrium solutions. These data sets are titled *boundary_data*.
 
+The data of the individual flamelets and the training data sets can be extracted from the compressed zip file named *flamelet_training_data.zip*.
+
 Step 4: Train ML-FGM MLPs with PIML and DF
 -------------------------------------------
 
@@ -45,7 +47,18 @@ The training data sets calculated in Step 3 can be used to train the ML-FGM netw
 
 The progress of the training processes can be monitored from the terminal and by navigating to *flamelet_data/architectures_Group\** and visualizing the training convergence history trends. After the training of a network completes, the network weights and biases are stored in the SU2 DataMiner configuration.
 
+The trained networks and convergence history can be found in the compressed zip file named *TrainedNetworks.zip*.
+
 Step 5: SU2 Simulations
 -----------------------
 
-The folder *SU2_Simulations* contains the SU2 configuration files, mesh generation instructions, and ASCII files describing the ML-FGM 
+The folder *SU2_Simulations* contains the SU2 configuration files, mesh generation instructions, and ASCII files describing the ML-FGM networks used to evaluate the thermochemical state during CFD calculations. The mesh can be generated using GMESH by running the [mesh generation script](SU2_Simulations/Mesh/generate_mesh.geo). The files with the ```.cfg``` extensions are the SU2 version 8 configuration files containing the instructions for the flow solver. The files with the ```.mlp``` extension describe the multi-layer perceptrons used for thermochemical state calculations.
+
+The flow simulations are run with the following command:
+```
+mpirun -n <NP> SU2_CFD <config_file>
+```
+where ```<NP>``` is the number of cores you want to use for the simulation and ```<config_file>``` the name of the SU2 configuration file. 
+
+The SU2 simulation results can also be found in the compressed zip file titled *SU2_Simulations.zip*. In Chapter 2 of the dissertation, the SU2 flow simulation results are compared with those generated with detailed chemistry (DC) analysis, generated with Ansys Fluent. The case files, diffusion model, and reaction mechanism files can be accessed by inflating the compressed zip file named *DC_solutions.zip*.
+

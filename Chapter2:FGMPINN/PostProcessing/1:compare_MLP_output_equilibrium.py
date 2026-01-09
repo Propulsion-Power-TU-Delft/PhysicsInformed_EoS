@@ -1,11 +1,20 @@
+# Compare the output of the ML-FGM networks trained using data-fitting and PIML in chemical equilibrium
 import numpy as np 
 import os 
-import csv
 import matplotlib.pyplot as plt 
 from su2dataminer.config import Config_FGM 
 from su2dataminer.manifold import Train_FGM_PINN
 
-def FiniteDifferenceDerivative(y, x):
+def FiniteDifferenceDerivative(y:np.ndarray[float], x:np.ndarray[float]):
+    """Calculate second-order accurate, one-dimensional finite-difference derivatives of y with respect to x.
+
+    :param y: data to calculate the finite-differences for.
+    :type y: np.ndarray[float]
+    :param x: axial coordinates.
+    :type x: np.ndarray[float]
+    :return: finite-difference derivatives of y with respect to x.
+    :rtype: np.ndarray[float]
+    """
     Np = len(x)
     dydx = np.zeros(Np)
     for i in range(1, Np-1):
@@ -56,16 +65,25 @@ color_ref = colors[0]
 color_direct = colors[1]
 color_PI = colors[2]
 
-
+# Load SU2 DataMiner configurations
 config_PINN = Config_FGM("../config_PIML.cfg")
 config_DNN = Config_FGM("../config_DF.cfg")
 
 
 def EvaluateMLPs(cv_vals:np.ndarray[float]):
+    """Evaluate the network output of the MLPs trained with DF and PIML
+
+    :param cv_vals: FGM controlling variable values for which to evaluate the network output.
+    :type cv_vals: np.ndarray[float]
+    :return: thermochemical state variable names, PIML output and DF output
+    """
+    # Evaluate the output of the first six thermochemical state variables with DF and PIML networks.
     for iGroup in range(6):
+        # Load weights and biases
         MLP_PINN = Train_FGM_PINN(config_PINN, iGroup)
         w,b = config_PINN.GetWeightsBiases(iGroup)
 
+        # Set MLP hyperparameters
         MLP_PINN.SetAlphaExpo(config_PINN.GetAlphaExpo(iGroup))
         MLP_PINN.SetLRDecay(config_PINN.GetLRDecay(iGroup))
         MLP_PINN.SetBatchExpo(config_PINN.GetBatchExpo(iGroup))
@@ -78,14 +96,16 @@ def EvaluateMLPs(cv_vals:np.ndarray[float]):
         MLP_PINN.GetTrainData()
         MLP_PINN.SetSaveDir(os.getcwd())
         MLP_PINN.SetModelIndex(100)
-
         MLP_PINN.Preprocessing()
 
+        # Evaluate output of MLP trained with PIML
         MLP_output_PINN = MLP_PINN.EvaluateMLP(cv_vals)
 
+        # Load weights and biases of DF trained network
         MLP_DNN = Train_FGM_PINN(config_DNN, iGroup)
         w,b = config_DNN.GetWeightsBiases(iGroup)
         
+        # Set MLP hyperparameters
         MLP_DNN.SetAlphaExpo(config_DNN.GetAlphaExpo(iGroup))
         MLP_DNN.SetLRDecay(config_DNN.GetLRDecay(iGroup))
         MLP_DNN.SetBatchExpo(config_DNN.GetBatchExpo(iGroup))
@@ -98,8 +118,9 @@ def EvaluateMLPs(cv_vals:np.ndarray[float]):
         MLP_DNN.GetTrainData()
         MLP_DNN.SetSaveDir(os.getcwd())
         MLP_DNN.SetModelIndex(100)
-
         MLP_DNN.Preprocessing()
+
+        # Evaluate output of MLP trained with DF
         MLP_output_DNN = MLP_DNN.EvaluateMLP(cv_vals)
 
         vars_MLP = config_PINN.GetMLPOutputGroup(iGroup)
@@ -114,14 +135,18 @@ def EvaluateMLPs(cv_vals:np.ndarray[float]):
             vars_out += vars_MLP 
     return vars_out, outputs_PINN, outputs_DNN
 
-fsize=25
+
+
+
+# Evaluate network output for unburnt chemical equilibrium mixtures between 300 and 860 Kelvin.
 T_unb_range = np.linspace(300, 860, 300)
 
-
+# Equivalence ratio values for which to evaluate the network output
 phis = [0.2, 0.5, 1.0, 3.0, 5.0]
 
+# Prepare figures
+fsize=25
 fig_1,axs1 = plt.subplots(ncols=3,nrows=1,figsize=[12,7])
-
 fig_2,axs2 = plt.subplots(ncols=2,nrows=1,figsize=[10,7])
 
 fig_3 = plt.figure(figsize=[10,6])
@@ -131,6 +156,7 @@ label_PINN = "PIML"
 label_DNN="DF"
 label_ref="Ref"
 
+# Calculate the thermochemical state variables of chemical equilibrium solutions
 for p in phis:
     config_PINN.gas.set_equivalence_ratio(p, config_PINN.GetFuelString(), config_PINN.GetOxidizerString())
     val_Z = config_PINN.gas.mixture_fraction(config_PINN.GetFuelString(), config_PINN.GetOxidizerString())
@@ -157,7 +183,7 @@ for p in phis:
         ref_data[i, ref_vars.index("Cp")] = cp_ref 
         ref_data[i, ref_vars.index("Beta_ProgVar")] = beta_pv 
         ref_data[i, ref_vars.index("Beta_MixFrac")] = beta_Z 
-        ref_data[i, ref_vars.index("MolarWeightMix")] = np.sum(config_PINN.gas.molecular_weights*config_PINN.gas.X)# config_PINN.gas.mean_molar_weights = np.dot(molar_weights.T, X)
+        ref_data[i, ref_vars.index("MolarWeightMix")] = np.sum(config_PINN.gas.molecular_weights*config_PINN.gas.X)
         ref_data[i, ref_vars.index("ProdRateTot_PV")] = 0.0
         ref_data[i, ref_vars.index("Beta_h1")] = beta_h1 
 

@@ -1,6 +1,5 @@
 import numpy as np 
 import os 
-import csv
 import matplotlib.pyplot as plt 
 from su2dataminer.config import Config_FGM 
 from su2dataminer.manifold import Train_FGM_PINN
