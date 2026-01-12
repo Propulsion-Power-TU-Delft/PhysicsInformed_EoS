@@ -48,3 +48,14 @@ The PINN is initially trained for 1000 epochs through data-fitting, after which 
 Step 5: Verify correctness of EEoS
 ----------------------------------
 
+The correctness of the entropy-based equation of state is verified by comparing the values of the thermodynamic state variables calculated with the entropy Jacobian and Hessian and those according to the Helmholtz equation of state. Running the script [4:generate_consistency_study_data.py](4:generate_consistency_study_data.py) calculates the mean square relative error between the thermodynamic state variables evaluated by both methods and prints the results in the terminal.
+
+Step 6: Run SU2 simulations
+---------------------------
+
+The SU2 simulations can be run by navigating to the *SU2_Simulation* folder. The sub-folders contain the SU2 configuration files corresponding to the EEoS, HEoS, and CEoS simulations. The mesh and flow solution files can be downloaded by inflating the compressed file titled *SU2_Simulation_Results.zip*. To run the simulations yourself, run the following command in the terminal:
+```
+mpirun -n <NP> SU2_CFD <config file>
+```
+where `<NP>` is the number of processors and `<config_file>` the name of the configuration file. 
+
