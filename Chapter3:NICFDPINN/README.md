@@ -38,12 +38,16 @@ The networks used to evaluate the Jacobian and Hessian components according to t
 
 After completing the training process, the weights and biases of the network are stored in the SU2 DataMiner configurations and can also be accessed in *Direct/Worker_0/Model_0/* and *Direct/Worker_0/Model_1/*.
 
+The training history and networks of the EEoS-MTNN method can also be accessed by inflating the compressed file titled *TrainedNetworks_DF.zip* downloaded from the 4TU research data archive.
+
 Step 4: Train EEoS-PINN network
 -------------------------------
 
 After generating the training data, the PIML method documented in Section 3.2.3 of the manuscript is used to train the network to evaluate the entropy potential. This is done by running the script [3:train_MLP_PINN.py](3:train_MLP_PINN.py). Information regarding the progress of the training process is printed in the terminal, but can also be accessed by visualizing the training convergence trends plotted in *PhysicsInformed/Worker_0/Model_0* during training. 
 
 The PINN is initially trained for 1000 epochs through data-fitting, after which the training restarts in which the network is trained to evaluate the thermodynamic state variables following the entropy-based equation of state. 
+
+The training history and networks of the EEoS-MTNN method can also be accessed by inflating the compressed file titled *TrainedNetworks_PINN.zip* downloaded from the 4TU research data archive.
 
 Step 5: Verify correctness of EEoS
 ----------------------------------
