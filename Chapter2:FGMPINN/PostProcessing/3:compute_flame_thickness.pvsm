@@ -83272,11 +83272,11 @@
     </Proxy>
     <Proxy group="sources" type="XMLMultiBlockDataReader" id="10832" servers="1">
       <Property name="FileName" id="10832.FileName" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v0565_Tw450.vtm"/>
+        <Element index="0" value="../DC_solutions/solution_data_phi_050_v0565_Tw450.vtm"/>
         <Domain name="files" id="10832.FileName.files"/>
       </Property>
       <Property name="FileNameInfo" id="10832.FileNameInfo" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v0565_Tw450.vtm"/>
+        <Element index="0" value="../DC_solutions/solution_data_phi_050_v0565_Tw450.vtm"/>
       </Property>
       <Property name="TimestepValues" id="10832.TimestepValues"/>
       <Property name="CellArrayInfo" id="10832.CellArrayInfo"/>
@@ -83684,11 +83684,11 @@
     </Proxy>
     <Proxy group="sources" type="XMLMultiBlockDataReader" id="16976" servers="1">
       <Property name="FileName" id="16976.FileName" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v100_Tw450.vtm"/>
+        <Element index="0" value="../Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v100_Tw450.vtm"/>
         <Domain name="files" id="16976.FileName.files"/>
       </Property>
       <Property name="FileNameInfo" id="16976.FileNameInfo" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v100_Tw450.vtm"/>
+        <Element index="0" value="../Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v100_Tw450.vtm"/>
       </Property>
       <Property name="TimestepValues" id="16976.TimestepValues"/>
       <Property name="CellArrayInfo" id="16976.CellArrayInfo"/>
@@ -84096,11 +84096,11 @@
     </Proxy>
     <Proxy group="sources" type="XMLMultiBlockDataReader" id="18776" servers="1">
       <Property name="FileName" id="18776.FileName" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v200_Tw450.vtm"/>
+        <Element index="0" value="../DC_solutions/solution_data_phi_050_v200_Tw450.vtm"/>
         <Domain name="files" id="18776.FileName.files"/>
       </Property>
       <Property name="FileNameInfo" id="18776.FileNameInfo" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v200_Tw450.vtm"/>
+        <Element index="0" value="../Chapter2:FGMPINN/DC_solutions/solution_data_phi_050_v200_Tw450.vtm"/>
       </Property>
       <Property name="TimestepValues" id="18776.TimestepValues"/>
       <Property name="CellArrayInfo" id="18776.CellArrayInfo"/>
@@ -84525,11 +84525,11 @@
     </Proxy>
     <Proxy group="sources" type="XMLMultiBlockDataReader" id="10558" servers="1">
       <Property name="FileName" id="10558.FileName" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/SU2_Simulations/flow_v0565_Tw450_PINN.vtm"/>
+        <Element index="0" value="../SU2_Simulations/flow_v0565_Tw450_PINN.vtm"/>
         <Domain name="files" id="10558.FileName.files"/>
       </Property>
       <Property name="FileNameInfo" id="10558.FileNameInfo" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/SU2_Simulations/flow_v0565_Tw450_PINN.vtm"/>
+        <Element index="0" value="../SU2_Simulations/flow_v0565_Tw450_PINN.vtm"/>
       </Property>
       <Property name="TimestepValues" id="10558.TimestepValues" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -84689,11 +84689,11 @@
     </Proxy>
     <Proxy group="sources" type="XMLMultiBlockDataReader" id="14704" servers="1">
       <Property name="FileName" id="14704.FileName" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/SU2_Simulations/FGM_solution_v1000_Tw450_PINN.vtm"/>
+        <Element index="0" value="../SU2_Simulations/FGM_solution_v1000_Tw450_PINN.vtm"/>
         <Domain name="files" id="14704.FileName.files"/>
       </Property>
       <Property name="FileNameInfo" id="14704.FileNameInfo" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/SU2_Simulations/FGM_solution_v1000_Tw450_PINN.vtm"/>
+        <Element index="0" value="../SU2_Simulations/FGM_solution_v1000_Tw450_PINN.vtm"/>
       </Property>
       <Property name="TimestepValues" id="14704.TimestepValues" number_of_elements="1">
         <Element index="0" value="0"/>
@@ -84853,11 +84853,11 @@
     </Proxy>
     <Proxy group="sources" type="XMLMultiBlockDataReader" id="16471" servers="1">
       <Property name="FileName" id="16471.FileName" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/SU2_Simulations/FGM_solution_v2000_Tw450_PINN.vtm"/>
+        <Element index="0" value="../SU2_Simulations/FGM_solution_v2000_Tw450_PINN.vtm"/>
         <Domain name="files" id="16471.FileName.files"/>
       </Property>
       <Property name="FileNameInfo" id="16471.FileNameInfo" number_of_elements="1">
-        <Element index="0" value="/home/ecbunschoten/RACE/ThesisData/Chapter2:FGMPINN/SU2_Simulations/FGM_solution_v2000_Tw450_PINN.vtm"/>
+        <Element index="0" value="../SU2_Simulations/FGM_solution_v2000_Tw450_PINN.vtm"/>
       </Property>
       <Property name="TimestepValues" id="16471.TimestepValues" number_of_elements="1">
         <Element index="0" value="0"/>
