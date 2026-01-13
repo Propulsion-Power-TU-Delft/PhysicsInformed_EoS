@@ -60,5 +60,7 @@ mpirun -n <NP> SU2_CFD <config_file>
 ```
 where ```<NP>``` is the number of cores you want to use for the simulation and ```<config_file>``` the name of the SU2 configuration file. 
 
-The SU2 simulation results can also be found in the compressed zip file titled *SU2_Simulations.zip*. In Chapter 2 of the dissertation, the SU2 flow simulation results are compared with those generated with detailed chemistry (DC) analysis, generated with Ansys Fluent. The case files, diffusion model, and reaction mechanism files can be accessed by inflating the compressed zip file named *DC_solutions.zip*.
+The SU2 simulation results can also be found in the compressed zip file titled *SU2_Simulations.zip* which can be downloaded from the 4TU research data repository. The flow simulation results are in multi-block vtk format and the file name contains the value of the inflow velocity. The folder also contains the solution binary files needed to restart the flow solution.
+
+In Chapter 2 of the dissertation, the SU2 flow simulation results are compared with those generated with detailed chemistry (DC) analysis, generated with Ansys Fluent. The case files, diffusion model, and reaction mechanism files can be accessed by inflating the compressed zip file named *DC_solutions.zip*.
 
