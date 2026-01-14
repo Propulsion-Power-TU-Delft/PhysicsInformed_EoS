@@ -56,6 +56,10 @@ The coefficients of the progress variable according to principal component analy
 
 After finalizing the optimization of the progress variable, the coefficients are calculated according to principal component analysis. Similarly, the values of the coefficients are automatically updated in the SU2 DataMiner configuration and displayed in the terminal after completion.
 
+Step 4: Extract ML-FGM training data
+------------------------------------
 
+The next step is to prepare the training data sets for the ML-FGM models by projecting the flamelet thermochemical state data onto the FGM controlling variables. This can be done by running the script [3:extract_training_data.py](3:extract_training_data.py). In the folder *flamelet_data*, three sets of ML-FGM training data are generated according to the three progress variable definitions considered in this study. 
 
+Alternatively, the ML-FGM training data can be directly accessed by inflating the compressed zip file titled *flamelet_training_data.zip* downloaded from the 4TU repository.
 
