@@ -74,3 +74,23 @@ The ML-FGM networks for each progress variable are trained by running the script
 Methods for the hyper-parameter optimization study
 ==================================================
 
+Step 1: Generate SU2 DataMiner configuration
+--------------------------------------------
+
+The training of the networks during the hyper-parameter optimization described in Chapter 4 of the dissertation was done by parameterizing the flamelet data with the optimized progress variable. Running [5:generate_config_HP_optimization.py](5:generate_config_HP_optimization.py) will copy the content of the SU2 DataMiner configuration *OPT.cfg* to a new configuration named *HP_Optimization.cfg* to copy the progress variable and flamelet manifold information.
+
+Step 2: Extract ML-FGM training data and group dependent variables
+------------------------------------------------------------------
+
+The ML-FGM training data is extracted similarly as to for the progress variable study, but using half the number of samples. For the progress variable study, 64 data points are interpolated from each flamelet, while for the hyperparameter optimization, only 32 points are interpolated. This was done to reduce the time required to train each network. 
+
+The computational cost of the hyperparameter optimization was reduced further by grouping the thermochemical state variables of the ML-FGM model over the output of multi-task neural networks, using the methods documented in Section 4.2.3 of the dissertation. By running the script [6:group_variables.py](6:group_variables.py), the ML-FGM training data is extracted from the flamelet manifold and the thermochemical state variables are grouped based on cross correlations. After that, the thermochemical state variables are updated for each group and stored in the SU2 DataMiner configuration.
+
+Step 3: Optimize the hyperparameters of the ML-FGM networks
+-----------------------------------------------------------
+
+The hyperparameter optimization described in Section 4.2.4 of the dissertation is initated by running
+```
+./7:optimize_hp.py <NP>
+```
+where ```<NP>``` is the number of networks to be trained simultaneously while evaluating the fitness the individuals in each generation of the evolutionary optimization process. As mentioned in the dissertation, this process is computationally very costly. The results can also be downloaded from the 4TU respository by 
