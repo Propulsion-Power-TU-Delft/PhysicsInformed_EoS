@@ -47,7 +47,15 @@ where ```<NP>``` is the number of cores allocated to the flamelet data generatio
 PlotFlamelets.py --c config_PIML.cfg --m
 ```
 
+The flamelet data can also be downloaded from the 4TU data repository as a compressed file titled *flamelet_training_data.zip*.
+
 Step 3: Optimize the progress variable
 --------------------------------------
 
-The coefficients of the progress variable according to principal component analysis and the optimization method are calculated from the flamelet solutions.
+The coefficients of the progress variable according to principal component analysis and the optimization method are calculated from the flamelet solutions by running the script [2:optimize_pv.py](2:optimize_pv.py). First, the progress variable coefficients are calculated according to the OPT method described in Chapter 4 of the dissertation. The progress of the optimization can be tracked through the terminal and by inspecting the images generated in the folder *PV_Optimization*, which also contains the numpy arrays with the optimized progress variable coefficients. After completing the progress variable optimization, the coefficients of the progress variable in the SU2 DataMiner configuration are automatically updated and the content of the SU2 DataMiner configuration is displayed in the terminal.
+
+After finalizing the optimization of the progress variable, the coefficients are calculated according to principal component analysis. Similarly, the values of the coefficients are automatically updated in the SU2 DataMiner configuration and displayed in the terminal after completion.
+
+
+
+
