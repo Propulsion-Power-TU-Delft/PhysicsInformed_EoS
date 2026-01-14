@@ -1,5 +1,29 @@
-# Generate SU2 DataMiner configurations for comparing the accuracy and consistency 
-# between using data-fitting and physics-informed training.
+#!/usr/bin/env python3
+###############################################################################################
+#       #      _____ __  _____      ____        __        __  ____                   #        #  
+#       #     / ___// / / /__ \    / __ \____ _/ /_____ _/  |/  (_)___  ___  _____   #        #  
+#       #     \__ \/ / / /__/ /   / / / / __ `/ __/ __ `/ /|_/ / / __ \/ _ \/ ___/   #        #      
+#       #    ___/ / /_/ // __/   / /_/ / /_/ / /_/ /_/ / /  / / / / / /  __/ /       #        #  
+#       #   /____/\____//____/  /_____/\__,_/\__/\__,_/_/  /_/_/_/ /_/\___/_/        #        #
+#       #                                                                            #        #
+###############################################################################################
+
+############################ FILE NAME: 0:generate_config.py ##################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Define SU2 DataMiner configurations for training ML-FGM networks with three different       |
+# progress variable definitions.                                                              |
+#                                                                                             |  
+# Version: 2.0.0                                                                              |
+#                                                                                             |
+#=============================================================================================#
 
 import os 
 from su2dataminer.config import Config_FGM
