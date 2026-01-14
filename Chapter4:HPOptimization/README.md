@@ -7,6 +7,9 @@ Requires: [SU2](https://github.com/su2code/SU2.git), [SU2 DataMiner](https://git
 
 The scripts in this folder explain the research methodologies presented in Chapter 4 of the doctoral dissertation of E.C.Bunschoten titled *Consistent data-driven equations of state for reacting and nonideal compressible fluids*. The first part focusses on the effect of the progress variable definition on ML-FGM accuracy and the second part focusses on the use of hyper-parameter optimization to derive relations between accuracy, computational cost, and ML-FGM hyperparameters.  
 
+Methods for the progress variable study
+=======================================
+
 Step 0: Install SU2, SU2 DataMiner and set up the environment
 -------------------------------------------------------------
 
@@ -62,4 +65,12 @@ Step 4: Extract ML-FGM training data
 The next step is to prepare the training data sets for the ML-FGM models by projecting the flamelet thermochemical state data onto the FGM controlling variables. This can be done by running the script [3:extract_training_data.py](3:extract_training_data.py). In the folder *flamelet_data*, three sets of ML-FGM training data are generated according to the three progress variable definitions considered in this study. 
 
 Alternatively, the ML-FGM training data can be directly accessed by inflating the compressed zip file titled *flamelet_training_data.zip* downloaded from the 4TU repository.
+
+Step 5: Train ML-FGM networks
+-----------------------------
+
+The ML-FGM networks for each progress variable are trained by running the script [4:train_MLPs.py](4:train_MLPs.py). For each progress variable, 12 networks corresponding to the thermochemical state variables of the ML-FGM model are trained in sequence. Progress of the training process can be tracked through the terminal or by inspecting the convergence plots generated in the folders titled *Architectures_OPT*, *Architectures_PCA*, and *Architectures_WRP* that are automatically generated when running the script. Alternatively, the trained networks used to produce the results presented in the dissertation can be accessed in the folder *TrainedMLPs*. 
+
+Methods for the hyper-parameter optimization study
+==================================================
 
