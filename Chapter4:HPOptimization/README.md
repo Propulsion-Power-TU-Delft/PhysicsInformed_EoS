@@ -93,4 +93,12 @@ The hyperparameter optimization described in Section 4.2.4 of the dissertation i
 ```
 ./7:optimize_hp.py <NP>
 ```
-where ```<NP>``` is the number of networks to be trained simultaneously while evaluating the fitness the individuals in each generation of the evolutionary optimization process. As mentioned in the dissertation, this process is computationally very costly. The results can also be downloaded from the 4TU respository by 
+where ```<NP>``` is the number of networks to be trained simultaneously while evaluating the fitness the individuals in each generation of the evolutionary optimization process. As mentioned in the dissertation, this process is computationally very costly. The results can also be downloaded from the 4TU respository by inflating the compressed file for each group with the header *HP_optimization_group_*.
+
+Step 4: Train ML-FGM networks with hyperparameters selected through trial and error
+-----------------------------------------------------------------------------------
+
+The computational efficiency of using ML-FGM networks with optimized hyperparameters over hyperparameters selected through trial and error used to train the networks in the research presented in Chapter 1 and in the first part of this chapter. To train the networks defined through trial and error, run the script [8:train_MLP_nonoptimized.py](8:train_mlp_nonoptimized.py). The progress of the training process can be tracked through the terminal or by inspecting the convergence trends stored in the folder *Architectures_UnOptimized*. 
+
+The weights and biases of the trained networks are stored in the SU2 DataMiner configuration titled *Unoptimized.cfg* and can also be accessed by inflating the compressed file titled *unoptimized_architectures.zip* which can be downloaded from the 4TU repository.
+

@@ -1,3 +1,27 @@
+###############################################################################################
+#       #      _____ __  _____      ____        __        __  ____                   #        #
+#       #     / ___// / / /__ \    / __ \____ _/ /_____ _/  |/  (_)___  ___  _____   #        #
+#       #     \__ \/ / / /__/ /   / / / / __ `/ __/ __ `/ /|_/ / / __ \/ _ \/ ___/   #        #
+#       #    ___/ / /_/ // __/   / /_/ / /_/ / /_/ /_/ / /  / / / / / /  __/ /       #        #
+#       #   /____/\____//____/  /_____/\__,_/\__/\__,_/_/  /_/_/_/ /_/\___/_/        #        #
+#       #                                                                            #        #
+###############################################################################################
+
+######################### FILE NAME: 8:train_MLP_nonoptimized.py ##############################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+#  Train the ML-FGM networks with the hyper-parameters selected through trial and error.      |
+#                                                                                             |
+# Version: 2.0.0                                                                              |
+#                                                                                             |
+#=============================================================================================#
 import os
 from su2dataminer.config import Config_FGM
 from su2dataminer.manifold import TrainMLP_FGM
@@ -10,7 +34,7 @@ lr_decay = 0.9896
 batch_expo = 6
 activation_f = "gelu"
 
-for iGroup in range(1, config_optim.GetNMLPOutputGroups()):
+for iGroup in range(config_optim.GetNMLPOutputGroups()):
     trainer = TrainMLP_FGM(config_optim, iGroup)
     trainer.SetHiddenLayers(N_H)
     trainer.SetAlphaExpo(r_l_0)
