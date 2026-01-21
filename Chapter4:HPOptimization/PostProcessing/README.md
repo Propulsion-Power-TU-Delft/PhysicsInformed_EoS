@@ -18,8 +18,14 @@ Step 1: Determine monotonicity of each progress variable
 For the three progress variable definitions, determine whether they are monotonic. This is done by calculating the monotonicity penalty function value of the three progress variable definitions. Running the script [1:compare_merit_functions.py](1:compare_merit_functions.py) loads the three SU2 DataMiner configurations corresponding to the three progress variable definitions and calculates the monotonicity penalty function value. If the value of the monotonicity penalty function value is equal to zero, that indicates that the progress variable is monotonic throughout the flamelet data state space. Of the three progress variable definitions, only the optimized progress variable is monotonic.
 
 
-Step 2: Plot flamelet trends
-----------------------------
+Step 2: Plot flamelet trends and progress variable coefficients
+---------------------------------------------------------------
 
 The three progress variable definitions are first compared by plotting the temperature of three flamelet solutions along each progress variable and calculating the derivative of the temperature w.r.t. the progress variable to qualitatively assess the gradients in the data set. In the dissertation, this is comparison is made through Figure 4.9. Running the script [2:plot_flamelet_trends.py](2:plot_flamelet_trends.py) calculates the second-order accurate temperature derivatives w.r.t. the progress variables using finite-differences and plots the trends along each progress variable, thereby reproducing Figure 4.9.
+The coefficients of the progress variables are visualized side-by-side in Figure 4.8 of the dissertation. This figure is reproduced by runing the script [3:plot_pv_weights.py](3:plot_pv_weights.py).
+
+Step 3: Visualize ML-FGM training loss values for each progress variable
+------------------------------------------------------------------------
+
+One of the most important figures in Chapter 4 of the dissertation is Figure 4.10, which shows the validation set loss value of the ML-FGM networks trained on the flamelet data parameterized by each progress variable. It indicates how the definition of the progress variable affects the accuracy of the networks. To reproduce Figure 4.10, run the script [4:plot_training_loss.py](4:plot_training_loss.py). This will read the validation loss values from the information stored in the folder *TrainedNetworks* which content can be downloaded from the 4TU research data repository. 
 
