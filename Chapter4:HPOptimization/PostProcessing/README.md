@@ -35,3 +35,8 @@ Step 4: Calculate evaluation error for temperature for the MLPs trained on each 
 Another way in which the three progress variable definitions are compared in the dissertation is in terms of the distribution of the evaluation error. While Figure 4.10 shows that the OPT progress variable produces the most accurate MLPs overall, that does not necessarily mean that the evaluation error is the lowest everywhere in the thermodynamic state space. 
 To this end, the evaluation error of the MLP used to evaluate the temperature is calculated for adiabatic flamelets throughout the thermodynamic state space for each progress variable and is visualized in Figure 4.11 of the dissertation. This figure can be reproduced by running the script [6:evaluate_MLP_output.py](6:evaluate_MLP_output.py). Here, the weights and biases values of the trained MLPs are read from the folder *TrainedMLPs* which content can be downloaded from the 4TU research data repository. 
 
+Post-processing for the hyperparameter optimization study
+=========================================================
+
+All the networks trained during the hyperparameter optimization can be found be inflating the compressed files headed by *HP_optimization_group* downloaded from the 4TU research data repository. These folders also contain information regarding the convergence history of the optimization processes. The convergence trends can be plotted by running the script [7:plot_hp_optim_convergence.py](7:plot_hp_optim_convergence.py) after downloading and inflating the optimization results. Running the script will produce the convergence plots shown in Figure 4.13 of the dissertation. 
+
