@@ -18,3 +18,8 @@ Step 1: Determine monotonicity of each progress variable
 For the three progress variable definitions, determine whether they are monotonic. This is done by calculating the monotonicity penalty function value of the three progress variable definitions. Running the script [1:compare_merit_functions.py](1:compare_merit_functions.py) loads the three SU2 DataMiner configurations corresponding to the three progress variable definitions and calculates the monotonicity penalty function value. If the value of the monotonicity penalty function value is equal to zero, that indicates that the progress variable is monotonic throughout the flamelet data state space. Of the three progress variable definitions, only the optimized progress variable is monotonic.
 
 
+Step 2: Plot flamelet trends
+----------------------------
+
+The three progress variable definitions are first compared by plotting the temperature of three flamelet solutions along each progress variable and calculating the derivative of the temperature w.r.t. the progress variable to qualitatively assess the gradients in the data set. In the dissertation, this is comparison is made through Figure 4.9. Running the script [2:plot_flamelet_trends.py](2:plot_flamelet_trends.py) calculates the second-order accurate temperature derivatives w.r.t. the progress variables using finite-differences and plots the trends along each progress variable, thereby reproducing Figure 4.9.
+

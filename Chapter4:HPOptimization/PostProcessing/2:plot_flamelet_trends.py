@@ -38,6 +38,7 @@ def FiniteDifferenceDerivative(y:np.ndarray[float], x:np.ndarray[float]):
     :return: derivative of y w.r.t x
     :rtype: np.ndarray[float]
     """
+    eps = 1e-14
     Np = len(x)
     dydx = np.zeros(Np)
     for i in range(1, Np-1):
@@ -51,7 +52,7 @@ def FiniteDifferenceDerivative(y:np.ndarray[float], x:np.ndarray[float]):
         dx_2 = x_0 - x_m 
         dx2_1 = dx_1*dx_1 
         dx2_2 = dx_2*dx_2
-        dydx[i] = (dx2_2 * y_p + (dx2_1 - dx2_2)*y_0 - dx2_1*y_m)/(dx_1*dx_2*(dx_1+dx_2) + 1e-10)
+        dydx[i] = (dx2_2 * y_p + (dx2_1 - dx2_2)*y_0 - dx2_1*y_m)/(dx_1*dx_2*(dx_1+dx_2) + eps)
     dx_1 = x[1] - x[0]
     dx_2 = x[2] - x[0]
     dx2_1 = dx_1*dx_1 
@@ -59,7 +60,7 @@ def FiniteDifferenceDerivative(y:np.ndarray[float], x:np.ndarray[float]):
     y_0 = y[0]
     y_p = y[1]
     y_pp = y[2]
-    dydx[0] = (dx2_1 * y_pp + (dx2_2 - dx2_1)*y_0 - dx2_2*y_p)/(dx_1*dx_2*(dx_1 - dx_2) + 1e-10)
+    dydx[0] = (dx2_1 * y_pp + (dx2_2 - dx2_1)*y_0 - dx2_2*y_p)/(dx_1*dx_2*(dx_1 - dx_2) + eps)
 
     dx_1 = x[-2] - x[-1]
     dx_2 = x[-3] - x[-1]
@@ -68,7 +69,7 @@ def FiniteDifferenceDerivative(y:np.ndarray[float], x:np.ndarray[float]):
     y_0 = y[-1]
     y_p = y[-2]
     y_pp = y[-3]
-    dydx[-1] = (dx2_1 * y_pp + (dx2_2 - dx2_1)*y_0 - dx2_2*y_p)/(dx_1*dx_2*(dx_1 - dx_2) + 1e-10)
+    dydx[-1] = (dx2_1 * y_pp + (dx2_2 - dx2_1)*y_0 - dx2_2*y_p)/(dx_1*dx_2*(dx_1 - dx_2) + eps)
     return dydx 
 
 # Load SU2 DataMiner configurations
@@ -128,15 +129,18 @@ Config_default = Config_FGM("../WRP.cfg")
 Config_pca = Config_FGM("../PCA.cfg")
 Config_optimized = Config_FGM("../OPT.cfg")
 
+# Flamelet solutions to plot the temperature trends of
 flamelet_dir = Config_default.GetOutputDir()
-flamelets_to_plot = ["/phi_0.328947/freeflamelet_phi0.328947_Tu300.0.csv","/phi_1.0/freeflamelet_phi1.0_Tu300.0.csv","/phi_2.9/freeflamelet_phi2.9_Tu300.0.csv"]
+flamelets_to_plot = ["/phi_0.328947/freeflamelet_phi0.328947_Tu300.0.csv",\
+                     "/phi_1.0/freeflamelet_phi1.0_Tu300.0.csv",\
+                     "/phi_2.9/freeflamelet_phi2.9_Tu300.0.csv"]
 phis=[0.33, 1.0, 2.9]
 plot_var = "Temperature"
 xlabel="c*"
 ylabel="T*"
 xlims = [[0.7, 1.050],[0.65, 1.050],[0.9,1.050]]
 ylims = [[0.7, 1.050],[0.5, 1.050],[0.7, 1.050]]
-ylims2 = [[-0.2, 2.0],[-1.0, 4.0],[-5.0, 10.0]]
+ylims2 = [[-0.2, 2.0],[-1.0, 4.0],[-15.0, 40.0]]
 fig,axs= plt.subplots(nrows=2,ncols=3,figsize=[12,6])
 #fig_dpv,axs_dpv= plt.subplots(nrows=1,ncols=3,figsize=[10,6])
 marker_frq = 0.08
@@ -193,7 +197,6 @@ for i in range(len(flamelets_to_plot)):
     axs[1, i].set_xlabel(xlabel,fontsize=fsize)
 axs[0,0].set_ylabel(ylabel,fontsize=fsize)
 axs[1,0].set_ylabel("d%s/d%s" % (ylabel,xlabel),fontsize=fsize)
-#plt.subplots_adjust(wspace=0.25, hspace=0.08)
 handles, labels = axs[0,0].get_legend_handles_labels()
 lgnd = fig.legend(handles, labels, fontsize=fsize,ncol=4,bbox_to_anchor=(0.5, 0.005),loc='upper center',fancybox=True,shadow=True)
 
