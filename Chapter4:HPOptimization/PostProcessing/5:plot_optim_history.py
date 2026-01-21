@@ -1,10 +1,32 @@
+#!/usr/bin/env python3
+###############################################################################################
+#       #      _____ __  _____      ____        __        __  ____                   #        #  
+#       #     / ___// / / /__ \    / __ \____ _/ /_____ _/  |/  (_)___  ___  _____   #        #  
+#       #     \__ \/ / / /__/ /   / / / / __ `/ __/ __ `/ /|_/ / / __ \/ _ \/ ___/   #        #      
+#       #    ___/ / /_/ // __/   / /_/ / /_/ / /_/ /_/ / /  / / / / / /  __/ /       #        #  
+#       #   /____/\____//____/  /_____/\__,_/\__/\__,_/_/  /_/_/_/ /_/\___/_/        #        #
+#       #                                                                            #        #
+###############################################################################################
+
+########################## FILE NAME: 5:plot_optim_history.py #################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Plot the convergence trends of the progress variable optimization process.                  |
+#                                                                                             |  
+# Version: 2.0.0                                                                              |
+#                                                                                             |
+#=============================================================================================#
 import numpy as np 
 import matplotlib.pyplot as plt 
-from matplotlib.ticker import FormatStrFormatter
+
 N=7
-plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.cubehelix(np.linspace(0,1,N+1)[:-1]))
-colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-line_styles = ['-', '--', '-.', ':']
 H_file_optim = "../PV_Optimization/Optim_PV_convergence_history.csv"
 
 fsize = 20
@@ -23,10 +45,11 @@ ax.tick_params(which='both',labelsize=fsize)
 ax.set_xticklabels([])
 ax.set_ylabel("Objective function, f",fontsize=fsize)
 ax.set_title("Progress variable optimization convergence",fontsize=fsize)
-#ax.set_yscale('log')
-#ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
 ax.grid()
 ax = axs[1]
+plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.cubehelix(np.linspace(0,1,N+1)[:-1]))
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+line_styles = ['-', '--', '-.', ':']
 for i in range(8):
     v = vars[i+1].strip("alpha")
     v = "a" + v

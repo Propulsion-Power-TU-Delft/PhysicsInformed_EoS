@@ -27,5 +27,11 @@ The coefficients of the progress variables are visualized side-by-side in Figure
 Step 3: Visualize ML-FGM training loss values for each progress variable
 ------------------------------------------------------------------------
 
-One of the most important figures in Chapter 4 of the dissertation is Figure 4.10, which shows the validation set loss value of the ML-FGM networks trained on the flamelet data parameterized by each progress variable. It indicates how the definition of the progress variable affects the accuracy of the networks. To reproduce Figure 4.10, run the script [4:plot_training_loss.py](4:plot_training_loss.py). This will read the validation loss values from the information stored in the folder *TrainedNetworks* which content can be downloaded from the 4TU research data repository. 
+One of the most important figures in Chapter 4 of the dissertation is Figure 4.10, which shows the validation set loss value of the ML-FGM networks trained on the flamelet data parameterized by each progress variable. It indicates how the definition of the progress variable affects the accuracy of the networks. To reproduce Figure 4.10, run the script [4:plot_training_loss.py](4:plot_training_loss.py). This will read the validation loss values from the information stored in the folder *TrainedMLPs* which content can be downloaded from the 4TU research data repository. 
+
+Step 4: Calculate evaluation error for temperature for the MLPs trained on each progress variable
+-------------------------------------------------------------------------------------------------
+
+Another way in which the three progress variable definitions are compared in the dissertation is in terms of the distribution of the evaluation error. While Figure 4.10 shows that the OPT progress variable produces the most accurate MLPs overall, that does not necessarily mean that the evaluation error is the lowest everywhere in the thermodynamic state space. 
+To this end, the evaluation error of the MLP used to evaluate the temperature is calculated for adiabatic flamelets throughout the thermodynamic state space for each progress variable and is visualized in Figure 4.11 of the dissertation. This figure can be reproduced by running the script [6:evaluate_MLP_output.py](6:evaluate_MLP_output.py). Here, the weights and biases values of the trained MLPs are read from the folder *TrainedMLPs* which content can be downloaded from the 4TU research data repository. 
 
