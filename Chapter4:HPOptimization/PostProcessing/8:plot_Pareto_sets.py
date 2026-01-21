@@ -1,13 +1,38 @@
+#!/usr/bin/env python3
+###############################################################################################
+#       #      _____ __  _____      ____        __        __  ____                   #        #  
+#       #     / ___// / / /__ \    / __ \____ _/ /_____ _/  |/  (_)___  ___  _____   #        #  
+#       #     \__ \/ / / /__/ /   / / / / __ `/ __/ __ `/ /|_/ / / __ \/ _ \/ ___/   #        #      
+#       #    ___/ / /_/ // __/   / /_/ / /_/ / /_/ /_/ / /  / / / / / /  __/ /       #        #  
+#       #   /____/\____//____/  /_____/\__,_/\__/\__,_/_/  /_/_/_/ /_/\___/_/        #        #
+#       #                                                                            #        #
+###############################################################################################
+
+############################ FILE NAME: 8:plot_Pareto_sets.py #################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Analyze the individuals along the Pareto fronts produced during hyperparmeter optimization  |
+# and plot the metrics shown in the disseration.                                              |
+#                                                                                             |  
+# Version: 2.0.0                                                                              |
+#                                                                                             |
+#=============================================================================================#
 import numpy as np 
 import matplotlib.pyplot as plt 
 from paretoset import paretoset
 from su2dataminer.config import Config_FGM
 
-iGroup = 0
 
 c = Config_FGM("../HP_Optimization.cfg")
 output_dir = c.GetOutputDir()
-
+# Plot information
 plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.cubehelix(np.linspace(0,1,c.GetNMLPOutputGroups()+1)))
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 markers = ['o','s','^','d','*']
@@ -18,42 +43,45 @@ i_phis = []
 val_scores = []
 cost_params = []
 hidden_layers = []
-number_perceptrons = []
 aspect_ratio = []
+
+# Analayze the individuals along the Pareto front for each group.
 NH_max = 0
 for iGroup in range(c.GetNMLPOutputGroups()):
+    # Load the optimization history content.
     hist_file ="%s/Architectures_Group%i_OptimLRAPhi/history_optim_Group%i_LRAPhi.csv" % (output_dir, iGroup+1, iGroup+1)
     with open(hist_file,'r') as fid:
         vars = fid.readline().strip().split(',')
     H = np.loadtxt(hist_file,delimiter=',',skiprows=1)
     generation = H[:,0]
+
+    # Extract learning rate parameters and hidden layer activation function index
     alpha_expo = H[:,1]
     lr_decay = H[:,2]
     i_phi = H[:,3]
-    NH = 2 + np.sum(H[:, [6,8,10,12,14,16,18,20]],axis=1)
-    hidden_layer_architecture = np.hstack((H[:,4:6], H[:, 6:22:2]*H[:, 7:23:2]))
-    sq = np.zeros(len(H))
-    AR = np.zeros(len(H))
-    sym = np.zeros(len(H))
-    avg_Nh = np.zeros(len(H))
 
-    NP = np.sum(hidden_layer_architecture, axis=1)
-    
-    N_av = NP / NH 
-
+    # Retrieve validation loss and cost parameter values
     val_score = H[:, -2]
     cost_param = H[:,-1]
 
+    # Calculate the number of hidden layers and determine hidden layer architecture
+    NH = 2 + np.sum(H[:, [6,8,10,12,14,16,18,20]],axis=1)
+    hidden_layer_architecture = np.hstack((H[:,4:6], H[:, 6:22:2]*H[:, 7:23:2]))
+    
+    # Calculate the number of nodes in the network and the aspect ratio of the hidden layers
+    NP = np.sum(hidden_layer_architecture, axis=1)
+    AR = NP / np.power(NH, 2) 
+
+    # Calculate the Pareto front of the validation score and cost parameter
     mask = paretoset(np.vstack((val_score, cost_param)).T, sense=["min","min"])
 
+    # Extract information from individuals on the Pareto front
     pareto_val_score = val_score[mask]
     pareto_cost_param = cost_param[mask]
-
     pareto_alpha_expo = alpha_expo[mask]
     pareto_lr_decay = lr_decay[mask]
     pareto_phi = i_phi[mask]
     pareto_NH = NH[mask]
-    pareto_NP = avg_Nh[mask]
     pareto_aspect_ratio = AR[mask]
 
     alpha_expos.append(pareto_alpha_expo)
@@ -62,8 +90,9 @@ for iGroup in range(c.GetNMLPOutputGroups()):
     val_scores.append(pareto_val_score)
     cost_params.append(pareto_cost_param)
     hidden_layers.append(pareto_NH)
-    number_perceptrons.append(pareto_NP)
     aspect_ratio.append(pareto_aspect_ratio)
+
+# Plot the Pareto front of the cost parameter and validation loss value for each group
 fsize=  20
 fig = plt.figure(figsize=[12,10])
 ax = plt.axes()
@@ -80,9 +109,12 @@ ax.set_title("Cost-accuracy Pareto fronts",fontsize=fsize)
 ax.legend(fontsize=fsize,ncol=1,bbox_to_anchor=(1, 0.5),loc='center left',fancybox=True,shadow=True)
 plt.show()
 
+# Plot the initial learning rate of the individuals along each Pareto front and calculate the cross correlation with the cost parameter
 fig = plt.figure(figsize=[12,7])
 ax = plt.axes()
 print("Alpha expo:")
+print("log10(r_l0) = b + a * log10(C)")
+print("Group, CC, a, b")
 mean_alpha_expo = 0.0
 for iGroup in range(c.GetNMLPOutputGroups()):
     x1 = np.log10(cost_params[iGroup])
@@ -98,7 +130,7 @@ for iGroup in range(c.GetNMLPOutputGroups()):
     x_ls = np.linspace(mu - std, mu + std, 10)
     y_ls = np.power(10, (x_ls - a[1])/a[0])
     cc_alpha_expo = np.corrcoef(np.log10(cost_params[iGroup]), alpha_expos[iGroup])
-    print("Group %i : %+.3e" % (iGroup+1, cc_alpha_expo[0,1]))
+    print("Group %i : %+.3e, %+.3e, %+.3e" % (iGroup+1, cc_alpha_expo[0,1], a[0,0], a[1,0]))
     ax.plot(cost_params[iGroup],np.power(10,alpha_expos[iGroup]),marker=markers[iGroup],markersize=8,linewidth=2,color=color,markerfacecolor='none',markeredgewidth=2,linestyle='none')
     ax.plot(y_ls, np.power(10,x_ls), color=color,marker=markers[iGroup], markerfacecolor='none',linewidth=3,markersize=12,linestyle='--',markeredgewidth=2,label='Group %i' % (iGroup+1))
     
@@ -110,9 +142,10 @@ ax.set_ylabel("Initial learning rate",fontsize=fsize)
 ax.tick_params(which='both',labelsize=fsize)
 ax.set_title("Initial learning rate value",fontsize=fsize)
 ax.legend(fontsize=fsize,ncol=1,bbox_to_anchor=(1, 0.5),loc='center left',fancybox=True,shadow=True)
-
 plt.show()
 
+
+# Plot the frequency of the activation function choice of the individuals in each Pareto front
 fig = plt.figure(figsize=[12,7])
 ax = plt.axes()
 N_phis = np.zeros([8, c.GetNMLPOutputGroups()])
@@ -131,14 +164,16 @@ ax.grid()
 ax.set_ylabel("Occurance[%]",fontsize=fsize)
 ax.set_xlabel("Hidden layer activation function",fontsize=fsize)
 ax.set_xticks([x for x in x_bars])
-ax.set_xticklabels(["elu","relu","tanh","gelu","sigmoid","swish"])
+ax.set_xticklabels(["elu","relu","tanh","gelu","sigmoid","ssilu"])
 ax.tick_params(which='both',labelsize=fsize)
 ax.set_title("Hidden layer activation function",fontsize=fsize)
 ax.legend(fontsize=fsize,ncol=1,bbox_to_anchor=(1, 0.5),loc='center left',fancybox=True,shadow=True)
 plt.show()
 
+# Plot the number of hidden layers against the validation loss value and the frequency of occurrence of each number of hidden layers.
 fig,axs = plt.subplots(ncols=2,nrows=1,figsize=[14,8])
 ax = axs[1]
+ax0 = axs[0]
 N_H = np.arange(2,11)
 w = 0.8
 w_bar = w / (c.GetNMLPOutputGroups()) 
@@ -148,6 +183,7 @@ for iGroup in range(c.GetNMLPOutputGroups()):
         freq_Nh[j] = np.sum(hidden_layers[iGroup] == N_H[j])
     freq_Nh /= np.sum(freq_Nh)
     ax.bar(x=N_H+ (0.5 + iGroup)*w_bar - 0.5*w, width=w_bar,height=100*freq_Nh,label='Group %i' % (iGroup+1),zorder=3)
+    ax0.plot(hidden_layers[iGroup], val_scores[iGroup],marker=markers[iGroup], markersize=12,markerfacecolor='none',linewidth=3,markeredgewidth=2,linestyle='none',label='Group %i' % (iGroup+1))
 ax.set_xticks([int(i) for i in N_H])
 ax.set_xticklabels([int(i) for i in N_H])
 ax.grid(which='both')
@@ -156,6 +192,14 @@ ax.set_ylabel("Frequency",fontsize=fsize)
 ax.tick_params(which='both',labelsize=fsize)
 ax.set_title("Number of hidden layers for each group",fontsize=fsize)
 ax.legend(fontsize=fsize,ncol=1,bbox_to_anchor=(1, 0.5),loc='center left',fancybox=True,shadow=True)
+
+ax0.grid()
+ax0.set_yscale('log')
+ax0.set_xticks([int(i) for i in N_H])
+ax0.set_xticklabels([int(i) for i in N_H])
+ax0.tick_params(which='both',labelsize=fsize)
+ax0.set_xlabel("Number of hidden layers",fontsize=fsize)
+ax0.set_ylabel("Validation loss value",fontsize=fsize)
 plt.show()
 
 ax = axs[0]
@@ -178,6 +222,7 @@ ax.tick_params(which='both',labelsize=fsize)
 ax.set_title("Number of hidden layers for each group",fontsize=fsize)
 plt.show()
 
+# Plot the hidden layer aspect ratio of the individuals in each Pareto front
 fig = plt.figure(figsize=[12,7])
 ax = plt.axes()
 print("Cross correlation between validation loss and aspect ratio:")
@@ -194,8 +239,7 @@ for iGroup in range(c.GetNMLPOutputGroups()):
     cc_aspect = np.corrcoef(np.log10(val_scores[iGroup]),aspect_ratio[iGroup])
     print("Group %i : %+.6e" % (iGroup+1, cc_aspect[0,1]))
     ax.plot(val_scores[iGroup],aspect_ratio[iGroup],color=colors[iGroup],marker=markers[iGroup],markersize=12,linewidth=3,markerfacecolor='none',markeredgewidth=2,linestyle='none',label='Group %i' % (iGroup+1))
-    #ax.plot(y_ls, x_ls,linestyle='--',color=colors[iGroup])
-
+   
 ax.grid(which='both')
 ax.set_xscale('log')
 ax.set_ylabel("Aspect ratio",fontsize=fsize)
@@ -205,7 +249,7 @@ ax.set_title("Aspect ratio of hidden layer archtiecture",fontsize=fsize)
 ax.legend(fontsize=fsize,ncol=1,bbox_to_anchor=(1, 0.5),loc='center left',fancybox=True,shadow=True)
 plt.show()
 
-
+# Plot the values of the learning rate decay parameter of the individuals along each Pareto front and plot the median value.
 fig = plt.figure(figsize=[12,7])
 ax = plt.axes()
 ymax = -100
@@ -223,6 +267,7 @@ for iGroup in range(c.GetNMLPOutputGroups()):
     x_norm = (x - min(x))/(max(x) - min(x))
     y_norm = (y - min(y))/(max(y) - min(y))
 
+    # Remove outliers 
     std_lr_decay = np.std(lr_decays[iGroup])
     ix_outlier = np.argwhere(np.logical_or(lr_decays[iGroup] > mu+1*std_lr_decay, lr_decays[iGroup] < mu-1*std_lr_decay))
     cost = np.delete(cost_params[iGroup], ix_outlier)

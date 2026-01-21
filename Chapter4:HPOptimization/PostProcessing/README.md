@@ -38,5 +38,13 @@ To this end, the evaluation error of the MLP used to evaluate the temperature is
 Post-processing for the hyperparameter optimization study
 =========================================================
 
+Step 1: Plot hyperparameter optimization convergence trends 
+-----------------------------------------------------------
+
 All the networks trained during the hyperparameter optimization can be found be inflating the compressed files headed by *HP_optimization_group* downloaded from the 4TU research data repository. These folders also contain information regarding the convergence history of the optimization processes. The convergence trends can be plotted by running the script [7:plot_hp_optim_convergence.py](7:plot_hp_optim_convergence.py) after downloading and inflating the optimization results. Running the script will produce the convergence plots shown in Figure 4.13 of the dissertation. 
+
+Step 2: Plot hyperparameters along the Pareto fronts
+----------------------------------------------------
+
+Figures 4.15, 4.16, 4.17, and 4.18 of the dissertation show the hyperparameters of the individuals along the Pareto fronts. To reproduce these figures, run the script [8:plot_Pareto_sets.py](8:plot_pareto_sets.py) after inflating the compressed files headed by *HP_optimization_group* downloaded from the 4TU research data repository. Running this script produces the figures and also reports the cross correlation values between the validation loss value, cost parameter value, and hyperparameters along each Pareto front. 
 
