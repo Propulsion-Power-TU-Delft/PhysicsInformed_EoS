@@ -21,13 +21,8 @@
 
 import sys
 import numpy as np
-import subprocess
-import matplotlib.pyplot as plt
 
 def copy_ffdb(mesh_file_ffdb, mesh_file_nodes, marker_names:list[list[str]]):
-
-    copy_ffd_control_points = True
-    marker_name  = 'cht_burner_fluid_solid'
 
     print('')
     print('Copying FFD info from ' + mesh_file_ffdb + ' to ' + mesh_file_nodes +'...')
@@ -36,30 +31,18 @@ def copy_ffdb(mesh_file_ffdb, mesh_file_nodes, marker_names:list[list[str]]):
     # check if output file already includes an ffd box
     with open(mesh_file_nodes, 'r') as in_str:
         for line in in_str:
-            if line[0:8] == 'FFD_NBOX':
+            if 'FFD_NBOX' in line:
                 print('')
                 print('  ' + mesh_file_nodes + ' already includes an FFD box. Aborting...')
                 print('')
                 return
-
-
-
     print('')
     print('  Reading points from mesh file ' + mesh_file_nodes)
     print('')
 
-    # find dimension of the mesh (2D or 3D)
     with open(mesh_file_nodes, 'r') as in_str:
         lines = in_str.readlines()
-        for line in lines:
-            line_p = line.strip().replace(" ","")
-            if "NDIME" in line_p:
-                n_dim = int(line_p.split("=")[-1])
-            if "NZONE" in line_p:
-                n_zone = int(line_p.split("=")[-1])
-    
-    point_counter = 0
-    iZone = 0
+
     x_zones,y_zones, z_zones,ix_nodes_zones = [],[],[],[]
     with open(mesh_file_nodes, 'r') as in_str:
         lines = in_str.readlines()
@@ -82,41 +65,7 @@ def copy_ffdb(mesh_file_ffdb, mesh_file_nodes, marker_names:list[list[str]]):
                 z_zones.append(z_mesh)
                 ix_nodes_zones.append(index_mesh_point)
     
-         
-        # for line in in_str:
-        #     if len(line) > 0:
-
-        #         if point_counter > 0:
-        #             next_mesh_point = line.split()
-
-        #             if (n_dim == 2):
-        #                 x_mesh[n_mesh_points - point_counter] = float(next_mesh_point[0])
-        #                 y_mesh[n_mesh_points - point_counter] = float(next_mesh_point[1])
-        #                 z_mesh[n_mesh_points - point_counter] = 0.0
-        #                 index_mesh_point[n_mesh_points - point_counter] = int(next_mesh_point[2])
-                    
-        #             elif (n_dim == 3):
-        #                 x_mesh[n_mesh_points - point_counter] = float(next_mesh_point[0])
-        #                 y_mesh[n_mesh_points - point_counter] = float(next_mesh_point[1])
-        #                 z_mesh[n_mesh_points - point_counter] = float(next_mesh_point[2])
-        #                 index_mesh_point[n_mesh_points - point_counter] = int(next_mesh_point[3])
-
-        #             point_counter -= 1
-
-        #         if (line[0:5] == 'NPOIN'):
-        #             n_mesh_points = int(line[7:])
-        #             print('  Points found.')
-        #             print('  Number of points: ' + str(n_mesh_points))
-        #             point_counter = n_mesh_points
-        #             x_mesh = np.ndarray(shape = (n_mesh_points,1))
-        #             y_mesh = np.ndarray(shape = (n_mesh_points,1))
-        #             z_mesh = np.ndarray(shape = (n_mesh_points,1))
-        #             index_mesh_point = np.ndarray(shape=(n_mesh_points,1), dtype=np.uint64)
-
-    
     # read markers that should be deformed from target file
-    marker_point_counter = 0
-    read_n_marker_points = False
     zones_box_markers = []
     x_box_markers, y_box_markers, z_box_markers, ix_box_markers = [],[],[],[]
     for m in marker_names:
@@ -125,8 +74,8 @@ def copy_ffdb(mesh_file_ffdb, mesh_file_nodes, marker_names:list[list[str]]):
         y_box_markers.append([0] * len(m))
         z_box_markers.append([0] * len(m))
         ix_box_markers.append([0] * len(m))
+
     with open(mesh_file_nodes, 'r') as in_str:
-        #lines_remesh = in_str.readlines()
         lines_remesh = in_str.readlines()
         for iline, line in enumerate(lines_remesh):
             line_stripped = line.strip().replace(" ","")
@@ -162,17 +111,16 @@ def copy_ffdb(mesh_file_ffdb, mesh_file_nodes, marker_names:list[list[str]]):
                         ix_box_markers[ibox][imarker] = ix_marker
 
     n_FFD_box = len(marker_names)
-    FFD_box_tags = []#['']*n_FFD_box
-    FFD_level = []#[0]*n_FFD_box
-    FFD_degree_I = []#[0]*n_FFD_box
-    FFD_degree_J = []#[0]*n_FFD_box
-    FFD_parents = []#[0]*n_FFD_box
-    FFD_children = []#[0]*n_FFD_box
-    n_corner_poins_FFD = []#[0]*n_FFD_box
-    corner_points_FFD = []#[0]*n_FFD_box
-    n_control_points_FFD = []#[0]*n_FFD_box
-    deformed_control_points_FFD = []#[[]]*n_FFD_box
-    n_FFD_surface_points = []#[0]*n_FFD_box 
+    FFD_box_tags = []
+    FFD_level = []
+    FFD_degree_I = []
+    FFD_degree_J = []
+    FFD_parents = []
+    FFD_children = []
+    n_corner_poins_FFD = []
+    corner_points_FFD = []
+    n_control_points_FFD = []
+    deformed_control_points_FFD = []
     FFD_delta_x = []
     FFD_delta_y = []
     FFD_x_offset = []
@@ -214,11 +162,8 @@ def copy_ffdb(mesh_file_ffdb, mesh_file_nodes, marker_names:list[list[str]]):
                 ffd_x1 = FFD_cp_x[1]
                 ffd_y0 = FFD_cp_y[0]
                 ffd_y1 = FFD_cp_y[2]
-                ffd_z0 = FFD_cp_z[0]
-                ffd_z1 = FFD_cp_z[1]
                 delta_x_ffd = ffd_x1 - ffd_x0 
                 delta_y_ffd = ffd_y1 - ffd_y0 
-                delta_z_ffd = ffd_z1 - ffd_z0 
                 FFD_delta_x.append(delta_x_ffd)
                 FFD_delta_y.append(delta_y_ffd)
                 FFD_x_offset.append(ffd_x0)
@@ -230,11 +175,6 @@ def copy_ffdb(mesh_file_ffdb, mesh_file_nodes, marker_names:list[list[str]]):
                 np_cp = int(line_p.split("=")[-1])
                 n_control_points_FFD.append(np_cp)
                 deformed_control_points_FFD.append(lines[iline+1:iline+1+np_cp])
-            if "FFD_SURFACE_POINTS" in line_p:
-                np_sp = int(line_p.split("=")[-1])
-                for jLine in range(iline+1, iline+1+np_sp):
-                    line_sp = lines[jLine].split()
-                    name_marker = line_sp[0]
 
     FFD_box_string = "FFD_NBOX= %i\nFFD_NLEVEL=1\n" % n_FFD_box
     
