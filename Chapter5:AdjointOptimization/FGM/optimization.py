@@ -1,9 +1,25 @@
+#!/usr/bin/env python3
+
+############################### FILE NAME: optimization.py ####################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Shape optimization of a partially premixed hydrogen burner with an equality constraint      |
+# applied to the outflow temperature.                                                         |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
 from FADO import *
 
 # Design variables ----------------------------------------------------- #
 
 nDV = 58
-
 dx = 1e-8 
 lb = np.ones(nDV)
 ub = np.ones(nDV)
@@ -19,27 +35,25 @@ DV_file_extensions = ["custom", "custom"]
 DV_file_extension="custom"
 # Parameters ----------------------------------------------------------- #
 
-# The master config `configMaster.cfg` serves as an SU2 adjoint regression test.
-# For a correct gradient validation we need to exchange some options
-
 # switch from direct to adjoint mode and adapt settings.
 enable_direct = Parameter([""], LabelReplacer("%__DIRECT__"))
 enable_adjoint = Parameter([""], LabelReplacer("%__ADJOINT__"))
+
+# Set convergence targets and objective functions
 obj_func_setters = []
 for f in OBJFUNC_NAMES:
    obj_func_setters.append(Parameter([f], LabelReplacer("__OBJ_FUNCTION_NAME__")))
 conv_target_direct = Parameter(["-12.43"], LabelReplacer("__CONV_TARGET__"))
 adj_conv_targets = [Parameter(["-13.2"],LabelReplacer("__CONV_TARGET__")),\
                     Parameter(["-11.2"],LabelReplacer("__CONV_TARGET__"))]
-# Evaluations ---------------------------------------------------------- #
 
-# Define a few often used variables
+# SU2 configuration file names and mesh file name
 ncores=12
 configMaster="master.cfg"
 config_files = ["master.cfg", "fluid.cfg", "solid_burner.cfg","solid_hex.cfg"]
 meshName="mesh_ffd_box.su2"
 
-# Note that correct SU2 version needs to be in PATH
+# SU2 commands for each step in the gradient evaluation process
 
 def_command = "SU2_DEF %s " % configMaster
 cfd_command = "mpirun -n %i SU2_CFD %s" % (ncores, configMaster)
@@ -49,8 +63,8 @@ dot_ad_command = "SU2_DOT_AD %s" % configMaster
 
 max_tries = 1
 
-# mesh deformation
-deform = ExternalRun("DEFORM",def_command,True) # True means sym links are used for addData
+# Step 1: mesh deformation
+deform = ExternalRun("DEFORM",def_command,True)
 deform.setMaxTries(max_tries)
 for c in config_files:
    deform.addConfig(c)
@@ -59,6 +73,7 @@ deform.addExpected("mesh_out.su2")
 deform.addParameter(obj_func_setters[0])
 deform.addParameter(conv_target_direct)
 
+# Step 2: conditional remeshing around deformed boundaries
 remesh = ExternalRun("REMESHING","python ../../remeshing_script.py", True)
 remesh.setMaxTries(max_tries)
 remesh.addData("DEFORM/mesh_out.su2",destination="mesh_out.su2")
@@ -66,7 +81,7 @@ remesh.addData("DEFORM/surface_deformed_1.csv",destination="surface_deformed_1.c
 remesh.addData("DEFORM/surface_deformed_2.csv",destination="surface_deformed_2.csv")
 remesh.addExpected("remesh_ffd_box.su2")
 
-# direct run
+# Step 3: evaluate objective and constraint function values
 direct = ExternalRun("DIRECT",cfd_command,True)
 direct.setMaxTries(max_tries)
 direct.addData("REMESHING/remesh_ffd_box.su2",destination=meshName)
@@ -83,7 +98,7 @@ direct.addParameter(enable_direct)
 direct.addParameter(obj_func_setters[0])
 direct.addParameter(conv_target_direct)
 
-# adjoint run
+# Step 4: adjoint calculations for objective and constraint function
 adjoints = []
 for f, q, e,t in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions, adj_conv_targets):
   adjoint = ExternalRun("ADJOINT_%s" % f,cfd_ad_command,True)
@@ -104,11 +119,10 @@ for f, q, e,t in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions, adj_co
   adjoint.addParameter(enable_adjoint)
   adjoint.addParameter(q)
   adjoint.addParameter(t)
-
   adjoints.append(adjoint)
   
 
-# gradient projection
+# Step 5: project gradients to FFD box nodes
 dots = []
 norm_grads = []
 functions = []
@@ -140,7 +154,7 @@ restart = False
 slsqp_hist_file = "hist_slsqp.csv"
 # Driver --------------------------------------------------------------- #
 
-# The input variable is the constraint tolerance which is not used for our purpose of finite differences
+# Define objective and constraint function
 driver = ScipyDriver()
 driver.addObjective("min", functions[OBJFUNC_NAMES.index("avg_p_inlet_scaled")],scale=1e-8)
 driver.addEquality(functions[OBJFUNC_NAMES.index("avg_temp_outlet_scaled")],target=1.0,scale=1e-8)
@@ -149,8 +163,7 @@ driver.setWorkingDirectory("DOE")
 driver.setEvaluationMode(True,2.0)
 driver.setStorageMode(True,"DSN_r1_")
 
-
-
+# Set up optimization
 import scipy.optimize
 
 if restart:
@@ -160,23 +173,23 @@ else:
 
 driver.setHistorian(his)
 driver.preprocess()
+
+# Read the design variable values of the last successful function evaluation in case of a restart
 if restart:
-  #his = open("doe.csv","a",1)
   H = np.loadtxt(slsqp_hist_file,delimiter=',',skiprows=1)
   x = H[-1, 2:]
-  #x = np.array([+2.689471e-05,+8.132446e-05,+1.037725e-04,+6.977514e-05,+2.267657e-05,+9.209580e-05,+1.500000e-04,+1.500000e-04,+1.500000e-04,+1.080852e-04,+1.399499e-04,+1.500000e-04,+1.500000e-04,+1.500000e-04,+1.500000e-04,+1.232415e-04,+1.500000e-04,+1.500000e-04,+1.500000e-04,+1.500000e-04,+1.500000e-04,+1.500000e-04,+1.035346e-04,+1.500000e-04,+1.500000e-04,+1.500000e-04,-5.184400e-05,-1.500000e-04,+1.355005e-04,+1.500000e-04,+7.117764e-06,-1.500000e-04,-1.500000e-04,-1.500000e-04,+1.177872e-04,-2.079023e-05,-1.260726e-04,-1.500000e-04,-1.249312e-04,-5.375008e-06,+1.613346e-05,+1.286069e-05,+2.328964e-06,+6.623547e-05,+4.909928e-05,-6.436912e-07,+1.168764e-04,+6.336640e-05,-5.634535e-05,-1.500000e-04,+1.174899e-04,+1.500000e-04,-1.500000e-04,+6.787138e-05,+1.500000e-04,-3.195191e-05,+1.094503e-05,+7.127282e-05])
 else:
   x = driver.getInitial()
-  #his = open("doe.csv","w")
   with open(slsqp_hist_file,"w+") as fid:
     fid.write("f,h," + ",".join("x_%i" % i for i in range(nDV)) + "\n")
 
 
-#driver.setHistorian(his)
-
-options = {'disp': True, 'maxiter': 100, 'ftol' : 1e-32}
-
 def Callback(x:np.ndarray):
+  """Optimization callback function which saves the objective, constraint, and design variable information at each iteration of the optimization
+
+  :param x: design variable values
+  :type x: np.ndarray
+  """
   print("Evaluating callback...")
   f = driver.fun(x) 
   h = driver.getConstraints()[0]["fun"](x)
@@ -185,6 +198,8 @@ def Callback(x:np.ndarray):
   n_iter = len(H)
   with open(slsqp_hist_file,"a+") as fid:
     fid.write("%.6e,%.6e,%s\n" % (f, h, ",".join("%+.6e" % s for s in x)))
+  
+  # Every 10 iterations, update the restart files
   if (n_iter % 10) == 0:
     os.system("cp DOE/DIRECT/restart_0.dat restart_r_0.dat")
     os.system("cp DOE/DIRECT/restart_1.dat restart_r_1.dat")
@@ -194,8 +209,9 @@ def Callback(x:np.ndarray):
       os.system("cp DOE/ADJOINT_%s/restart_adj_custom_1.dat restart_r_adj_%s_1.dat" % (f, f))
       os.system("cp DOE/ADJOINT_%s/restart_adj_custom_2.dat restart_r_adj_%s_2.dat" % (f, f))
       
-  return 
-
+  return
+ 
+options = {'disp': True, 'maxiter': 100, 'ftol' : 1e-32}
 optimum = scipy.optimize.minimize(driver.fun, x, method="SLSQP", jac=driver.grad,\
           constraints=driver.getConstraints(), bounds=driver.getBounds(), options=options,tol=1e-16,callback=Callback)
 
