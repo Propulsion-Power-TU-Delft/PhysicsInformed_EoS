@@ -1,5 +1,19 @@
-# FADO script: Finite Differences vs adjoint run
-import sys 
+#!/usr/bin/env python3
+
+############################### FILE NAME: optimization.py ####################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Gradient validation of a partially premixed hydrogen burner parameterized with FFD boxes.   |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
 import math
 import pandas as pd
 from FADO import *
@@ -21,9 +35,6 @@ DV_file_extensions = ["custom", "custom"]
 DV_file_extension="custom"
 # Parameters ----------------------------------------------------------- #
 
-# The master config `configMaster.cfg` serves as an SU2 adjoint regression test.
-# For a correct gradient validation we need to exchange some options
-
 # switch from direct to adjoint mode and adapt settings.
 enable_direct = Parameter([""], LabelReplacer("%__DIRECT__"))
 enable_adjoint = Parameter([""], LabelReplacer("%__ADJOINT__"))
@@ -33,29 +44,26 @@ for f in OBJFUNC_NAMES:
 conv_target_direct = Parameter(["-12.43"], LabelReplacer("__CONV_TARGET__"))
 adj_conv_targets = [Parameter(["-13.2"],LabelReplacer("__CONV_TARGET__")),\
                     Parameter(["-11.2"],LabelReplacer("__CONV_TARGET__"))]
-# Evaluations ---------------------------------------------------------- #
-
-# The master config `configMaster.cfg` serves as an SU2 adjoint regression test.
-# For a correct gradient validation we need to exchange some options
 
 # switch from direct to adjoint mode and adapt settings.
 enable_direct = Parameter([""], LabelReplacer("%__DIRECT__"))
 enable_adjoint = Parameter([""], LabelReplacer("%__ADJOINT__"))
+
+# Set convergence targets and objective functions
 obj_func_setters = []
 for f in OBJFUNC_NAMES:
    obj_func_setters.append(Parameter([f], LabelReplacer("__OBJ_FUNCTION_NAME__")))
 conv_target_direct = Parameter(["-12.43"], LabelReplacer("__CONV_TARGET__"))
 adj_conv_targets = [Parameter(["-13.2"],LabelReplacer("__CONV_TARGET__")),\
                     Parameter(["-11.2"],LabelReplacer("__CONV_TARGET__"))]
-# Evaluations ---------------------------------------------------------- #
 
-# Define a few often used variables
+# SU2 configuration file names and mesh file name
 ncores="12"
 configMaster="master.cfg"
 config_files = ["master.cfg", "fluid.cfg", "solid_burner.cfg","solid_hex.cfg"]
 meshName="mesh_ffd_box.su2"
 
-# Note that correct SU2 version needs to be in PATH
+# SU2 commands for each step in the gradient evaluation process
 
 def_command = "SU2_DEF " + configMaster
 cfd_command = "mpirun -n " + ncores + " SU2_CFD " + configMaster
@@ -65,7 +73,7 @@ dot_ad_command = "SU2_DOT_AD " + configMaster
 
 max_tries = 1
 
-# mesh deformation
+# Step 1: mesh deformation
 deform = ExternalRun("DEFORM",def_command,True) # True means sym links are used for addData
 deform.setMaxTries(max_tries)
 for c in config_files:
@@ -75,7 +83,7 @@ deform.addExpected("mesh_out.su2")
 deform.addParameter(obj_func_setters[0])
 deform.addParameter(conv_target_direct)
 
-# direct run
+# Step 2: flow simulation, evaluate objective and constrain function values.
 direct = ExternalRun("DIRECT",cfd_command,True)
 direct.setMaxTries(max_tries)
 direct.addData("DEFORM/mesh_out.su2",destination=meshName)
@@ -92,7 +100,7 @@ direct.addParameter(enable_direct)
 direct.addParameter(obj_func_setters[0])
 direct.addParameter(conv_target_direct)
 
-# adjoint run
+# Step 3: adjoint calculations for objective and constraint function
 adjoints = []
 for f, q, e,t in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions, adj_conv_targets):
   adjoint = ExternalRun("ADJOINT_%s" % f,cfd_ad_command,True)
@@ -114,7 +122,7 @@ for f, q, e,t in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions, adj_co
   adjoints.append(adjoint)
   
 
-# gradient projection
+# Step 4: project gradients to FFD box nodes
 dots = []
 functions = []
 for f, q, e in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions):
@@ -130,7 +138,6 @@ for f, q, e in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions):
   dots.append(dot)
 
 for f, dot, adjoint in zip(OBJFUNC_NAMES, dots, adjoints):
-  # Functions ------------------------------------------------------------ #
   func = Function(f, "DIRECT/history_fluid_0.csv",LabeledTableReader("\"%s\"" % f))
   func.addInputVariable(ffd, "DOT_%s/of_grad.csv" % f,TableReader(None,0,(1,0))) 
   func.addValueEvalStep(deform)
@@ -142,8 +149,6 @@ for f, dot, adjoint in zip(OBJFUNC_NAMES, dots, adjoints):
 
 # Driver --------------------------------------------------------------- #
 
-# i_objfunc = 1
-# The input variable is the constraint tolerance which is not used for our purpose of finite differences
 driver = ExteriorPenaltyDriver(0.005)
 driver.addObjective("min", functions[OBJFUNC_NAMES.index("avg_p_inlet_scaled")], 1e-7)
 driver.addEquality(functions[OBJFUNC_NAMES.index("avg_temp_outlet_scaled")], 1.0)
@@ -155,22 +160,21 @@ driver.setStorageMode(True,"DSN_")
 his = open("doe.csv","w",1)
 driver.setHistorian(his)
 
-# print("Computing baseline primal")
+# Step 5: Compute gradients with discrete adjoint
 x = driver.getInitial()
-driver.fun(x) # baseline evaluation
+driver.fun(x) 
 
-# Compute discrete adjoint gradient
 print("Computing discrete adjoint gradient")
 driver.grad(x)
 
-# Primal simulation for each deformed DV
+# Step 6: Direct simulation for each deformed DV
 for iLoop in range(nDV):
     print("Computing deformed primal ", iLoop, "/", nDV-1)
     x = driver.getInitial()
     x[iLoop] = dx 
     driver.fun(x)
     
-#end
+
 
 
 def printGradVal(FDgrad, DAgrad):
@@ -209,7 +213,6 @@ DAstring_specVar ='CUSTOM_OBJFUNC gradient '
 
 DAgrad_temp = DAvals_temp[DAstring_specVar].values
 DAgrad_p = DAvals_p[DAstring_specVar].values
-#nDV = DAgrad_p.size
 
 # Load primal values and create FD gradient
 FDvals = np.loadtxt("doe.csv",delimiter=',',skiprows=1)
@@ -217,14 +220,14 @@ FDvals = np.loadtxt("doe.csv",delimiter=',',skiprows=1)
 FDvals_temp = FDvals[:,2]
 FDvals_p = FDvals[:,1]
 
-  
-# Note that the FDvals have the baseline value written in its last position
+# Note that the FDvals have the baseline value written in the first position
 FDgrad_temp = (FDvals_temp[1:] - FDvals_temp[0]) / dx
 FDgrad_p = (FDvals_p[1:] - FDvals_p[0]) / dx
 
 diff_grad_temp = ((DAgrad_temp - FDgrad_temp)/FDgrad_temp)
 diff_grad_p = ((DAgrad_p - FDgrad_p)/FDgrad_p)
 
+# Print the first 
 ix = np.arange(nDV)
 np.random.shuffle(ix)
 
