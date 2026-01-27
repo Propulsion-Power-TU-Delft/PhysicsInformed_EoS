@@ -17,3 +17,5 @@
 !fluid.cfg 
 !solid_burner.cfg 
 !solid_hex.cfg 
+!Mesh/generate_mesh.py
+!Mesh/README.md
