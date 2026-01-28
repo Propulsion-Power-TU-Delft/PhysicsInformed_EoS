@@ -58,7 +58,7 @@ adj_conv_targets = [Parameter(["-13.2"],LabelReplacer("__CONV_TARGET__")),\
                     Parameter(["-11.2"],LabelReplacer("__CONV_TARGET__"))]
 
 # SU2 configuration file names and mesh file name
-ncores="12"
+ncores="6"
 configMaster="master.cfg"
 config_files = ["master.cfg", "fluid.cfg", "solid_burner.cfg","solid_hex.cfg"]
 meshName="mesh_ffd_box.su2"
@@ -102,7 +102,7 @@ direct.addParameter(conv_target_direct)
 
 # Step 3: adjoint calculations for objective and constraint function
 adjoints = []
-for f, q, e,t in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions, adj_conv_targets):
+for f, q, e,t, d in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions, adj_conv_targets, DV_NAMES):
   adjoint = ExternalRun("ADJOINT_%s" % f,cfd_ad_command,True)
   adjoint.setMaxTries(max_tries)
   for ic, c in enumerate(config_files):
@@ -111,6 +111,8 @@ for f, q, e,t in zip(OBJFUNC_NAMES, obj_func_setters, DV_file_extensions, adj_co
   adjoint.addData("DEFORM/mesh_out.su2", destination=meshName)
   for i in range(1,6):
     adjoint.addData("MLP_Group%i.mlp" % i)
+  for i in range(3):
+    adjoint.addData("restart_adj_%s_%i.dat" % (d, i), destination="solution_adj_custom_%i.dat" % (i))
   adjoint.addData("MLP_NULL.mlp")
   adjoint.addExpected("restart_adj_"+DV_file_extension+"_0.dat")
   adjoint.addExpected("restart_adj_"+DV_file_extension+"_1.dat")
