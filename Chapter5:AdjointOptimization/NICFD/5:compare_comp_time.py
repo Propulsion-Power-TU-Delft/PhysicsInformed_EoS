@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+
+########################## FILE NAME: 5:compare_comp_time.py ##################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Compare the computational cost between direct and adjoint solvers.                          |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
 import numpy as np 
 import matplotlib.pyplot as plt 
 import matplotlib as mpl
@@ -9,6 +25,7 @@ plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.cubehelix(np.linspa
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 
+# Read convergence history files.
 hist_file_HEoS = "../ComputationTime/CoolProp/history_direct_JST_CoolProp.csv"
 hist_file_EEoS_direct = "../ComputationTime/PINN/history_direct_JST_rr.csv"
 hist_file_EEoS_adjoint = "../ComputationTime/PINNAdjoint/history_adjoint_dev_vel.csv"
@@ -28,6 +45,7 @@ with open(hist_file_EEoS_adjoint,'r') as fid:
     vars_EEoS_adjoint = [v.strip("\"") for v in vars_EEoS_adjoint]
 H_EEoS_adjoint = np.loadtxt(hist_file_EEoS_adjoint,delimiter=',',skiprows=1)
 
+# Runtime memory footprint measurements obtained from system monitoring during simulations.
 M_HEoS = 3.8 
 M_EEoS = 3.8
 M_adjoint_nopeacc = 132.9

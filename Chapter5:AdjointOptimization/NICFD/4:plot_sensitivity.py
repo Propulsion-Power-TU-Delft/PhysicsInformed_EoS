@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
 
-########################## FILE NAME: 1:generate_mesh_gmsh.py #################################
+########################### FILE NAME: 4:plot_sensitivity.py ##################################
 #=============================================================================================#
 # author: Evert Bunschoten                                                                    |
 #    :PhD Candidate ,                                                                         |
@@ -11,7 +11,7 @@
 #                                                                                             |
 #                                                                                             |
 # Description:                                                                                |
-# Generate the 2D mesh used for shape optimization of the annular ORCHID stator blade.        |
+# Compare the sensitivity values evaluated with finite-differences and adjoint.               |
 #                                                                                             |  
 #                                                                                             |
 #=============================================================================================#
@@ -39,12 +39,8 @@ N=3
 plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.cubehelix(np.linspace(0,1,N+1)))
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
+# Load adjoint surface sensitivities.
 surface_sens_filename="../Base/DOT/surface_sensitivity.csv"
-IN = read_user_input("../ORCHID_stator_base_ParaBlade.cfg")
-blade = BladeGeom2D(IN)
-blade.make_blade()
-
-
 with open(surface_sens_filename,'r') as fid:
     vars_sens_file = fid.readline().strip().split(",")
     vars_sens_file = [v.strip("\"") for v in vars_sens_file]
@@ -52,6 +48,12 @@ sens_surf_AD = np.loadtxt(surface_sens_filename,delimiter=',',skiprows=1)
 x_surf, y_surf = sens_surf_AD[:, vars_sens_file.index("x")],sens_surf_AD[:, vars_sens_file.index("y")]
 iPoint_surf = sens_surf_AD[:,0]
 
+# Load blade CAD parameters.
+IN = read_user_input("../ORCHID_stator_base_ParaBlade.cfg")
+blade = BladeGeom2D(IN)
+blade.make_blade()
+
+# Find the parameterized coordinates corresponding to the blade mesh coordiantes.
 u_range_coarse = np.linspace(0, 1, 100)
 xy_blade_coarse = blade.get_coordinates(u_range_coarse).T
 
@@ -95,10 +97,9 @@ for dv_name, dv_val in zip(blade.DVs_values.keys(), blade.DVs_values.values()):
             IN_n[dv_name][iDv] *= 1.0001
             delta_dv = IN_n[dv_name][iDv] - IN[dv_name][iDv]
 
-            x_blade_n = sens_surf_AD[:, vars_sens_file.index("x")] + sens_cad[:,0]*delta_dv 
-            y_blade_n = sens_surf_AD[:, vars_sens_file.index("y")] + sens_cad[:,1]*delta_dv 
-            
             sens_dot = np.sum(sens_cad*sens_AD)
+
+            # Only consider parameters with significant sensitivities.
             if abs(sens_dot) > 5:
                 x_vars.append(x)
                 sens_vars.append(sens_dot)
@@ -107,7 +108,7 @@ for dv_name, dv_val in zip(blade.DVs_values.keys(), blade.DVs_values.values()):
         except:
             pass
 
-
+# Sort parameters based on sensitivity
 ix_sort = np.argsort(np.abs(np.array(sens_vars)))[::-1]
 x_vars = np.array([i for i in range(len(sens_vars))])
 sens_vars = [sens_vars[i] for i in ix_sort]
@@ -116,6 +117,7 @@ var_labels = [var_labels[i] for i in ix_sort]
 sens_vars_FD = []
 sens_vars_FD_CP = []
 
+# Read AD and FD sensitivities from solution files.
 for v in var_labels:
     
     sens_AD = float(np.genfromtxt("%s/plus_%s/sens_AD.txt" % (cdir, v)))
@@ -140,7 +142,8 @@ for v in var_labels:
     except:
         sens_vars_FD_CP.append(0)
 
-    
+
+# Plot sensitivities and calculate differences.
 var_labels = [v.replace("thickness_upper", "U") for v in var_labels]
 var_labels = [v.replace("thickness_lower", "L") for v in var_labels]
 var_labels[var_labels.index("chord_axial_0")] = "c"
