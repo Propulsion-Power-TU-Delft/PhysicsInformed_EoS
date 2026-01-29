@@ -1,15 +1,27 @@
+#!/usr/bin/env python3
+
+########################### FILE NAME: 2:perturb_blade_geom.py ################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Perturb blade geometry in the direction of the CAD sensitivities evaluated with the SU2     |
+# discrete adjoint solver.                                                                    |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
 import numpy as np
-import matplotlib.pyplot as plt
-import gmsh 
-from scipy.interpolate import interp1d
-from scipy.optimize import minimize_scalar, Bounds,root
+from scipy.optimize import root
 
 #---------------------------------------------------------------------------------------------#
 # Importing general packages
 #---------------------------------------------------------------------------------------------#
-import sys
 import os
-import time
 import copy
 #---------------------------------------------------------------------------------------------#
 # Importing ParaBlade classes and functions
@@ -18,11 +30,8 @@ from common.common_utils import *
 from common.config_utils import *
 from src.blade_geom_2D import BladeGeom2D
 
+# Read surface sensitivities.
 surface_sens_filename="Base/DOT/surface_sensitivity.csv"
-IN = read_user_input("ORCHID_stator_base_ParaBlade.cfg")
-blade = BladeGeom2D(IN)
-blade.make_blade()
-
 with open(surface_sens_filename,'r') as fid:
     vars_sens_file = fid.readline().strip().split(",")
     vars_sens_file = [v.strip("\"") for v in vars_sens_file]
@@ -30,6 +39,12 @@ sens_surf_AD = np.loadtxt(surface_sens_filename,delimiter=',',skiprows=1)
 x_surf, y_surf = sens_surf_AD[:, vars_sens_file.index("x")],sens_surf_AD[:, vars_sens_file.index("y")]
 iPoint_surf = sens_surf_AD[:,0]
 
+# Create ParaBlade geometry.
+IN = read_user_input("ORCHID_stator_base_ParaBlade.cfg")
+blade = BladeGeom2D(IN)
+blade.make_blade()
+
+# Find the parameterized coordinates corresponding to the mesh surface coordinates.
 u_range_coarse = np.linspace(0, 1, 100)
 xy_blade_coarse = blade.get_coordinates(u_range_coarse).T
 
@@ -49,11 +64,12 @@ for i_surf in range(len(sens_surf_AD)):
     res = root(GetDist, x0=0.0,args=(u_coarse, x,y),tol=1e-30)
     vals_u_surf[i_surf] = (res.x + u_coarse) % 1.0
 
-xy_orig = blade.get_coordinates(np.linspace(0, 1, 300)).T
+# Retrieve CAD surface sensitivities along the blade surface coordinates.
 sens_cad_all = blade.get_sensitivity(vals_u_surf)
 
 sens_AD = sens_surf_AD[:, [vars_sens_file.index("Sensitivity_x"),vars_sens_file.index("Sensitivity_y")]]
 
+# Perform dot product between surface sensitivities and CAD sensitivities for each parameter.
 cad_sens = {}
 sens_mag = 0.0
 for dv_name, dv_val in zip(blade.DVs_values.keys(), blade.DVs_values.values()):
@@ -67,6 +83,7 @@ for dv_name, dv_val in zip(blade.DVs_values.keys(), blade.DVs_values.values()):
         except:
             pass
 
+# Update the values of the CAD parameters based on the sensitivity values.
 IN_n = copy.deepcopy(IN)
 step_size = 2e-5
 sens_mag = np.sqrt(sens_mag)
@@ -87,16 +104,15 @@ for dv_name, dv_val in zip(blade.DVs_values.keys(), blade.DVs_values.values()):
         except:
             pass
 
+# Create updated blade geometry and write ParaBlade configuration file
 blade.update_DVs_values(IN_n)
 blade.make_blade()
-
 fid = open("ORCHID_stator_updated_ParaBlade.cfg","w+")
 write_config_file(fid, IN_n)
 fid.close()
 
+# Write the updated blade surface coordinates to deform the mesh.
 xy_updated = blade.get_coordinates(vals_u_surf).T
-
-
 fid = open("%s/Base_Updated/MoveSurface.dat" % (os.getcwd()), "w+")
 for i in range(len(x_blade_n)):
     fid.write("%i\t%+.16e\t%+.16e\t%+.16e\n" % (iPoint_surf[i], x_blade_n[i],y_blade_n[i],0.0))

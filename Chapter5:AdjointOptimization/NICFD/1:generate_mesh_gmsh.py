@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+
+########################## FILE NAME: 1:generate_mesh_gmsh.py #################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Generate the 2D mesh used for shape optimization of the annular ORCHID stator blade.        |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
 import numpy as np
 import gmsh 
 from scipy.optimize import minimize_scalar
@@ -27,6 +43,8 @@ class BladeMesh2D:
     XY_perio_1:np.ndarray[float] = None 
     XY_perio_2:np.ndarray[float] = None 
     mesh_filename:str="ORCHID_mesh.su2"
+    _additional_refinement:bool = False 
+    _ref_pt_file_name:str = ""
     def __init__(self, blade_in_file:str):
         self.parablade_cfg_file = blade_in_file
         self.GenerateBladeGeom()
@@ -70,17 +88,31 @@ class BladeMesh2D:
         sens = self.blade_geom.get_sensitivity(self.u_blade)
         return sens
     def MakePeriodicBoundary(self):
+        """Create periodic boundaries between adjacent blades.
+        """
+
         XY_blade = self.blade_geom.get_coordinates(self.u_blade).T
         self.delta_theta = 2*np.pi / self.n_blades
+
+        # Calculate inlet and outlet radii
         r_blade =np.linalg.norm(XY_blade,axis=1)
         r_max = max(r_blade) + self.delta_r_inlet
         r_min =min(r_blade) - self.delta_r_outlet
         theta_blade = np.arctan2(XY_blade[:,1],XY_blade[:,0])
         rtheta_blade = r_blade * theta_blade
-        def getdist(rtheta, r):
+
+        def getdist(rtheta:float, r:float):
+            """Calculate distance between adjacent blades
+
+            :param rtheta: annular coordinate
+            :type rtheta: float
+            :param r: radius
+            :type r: float
+            :return: absolute difference between distance between blades
+            :rtype: float
+            """
             dist_1 = np.power((rtheta_blade - rtheta), 2) + np.power((r_blade - r), 2)
             dist_2 = np.power((rtheta_blade - rtheta + r * self.delta_theta), 2) + np.power((r_blade - r), 2)
-
             return (np.abs(np.min(dist_1) - np.min(dist_2)))
 
         r_range = np.linspace(r_min, r_max,200)
@@ -88,6 +120,7 @@ class BladeMesh2D:
         rtheta_at_r = rtheta_blade[np.argmin(np.power(r_min - r_blade, 2))]
         bounds = (rtheta_at_r - r_min*self.delta_theta, rtheta_at_r + r_min*self.delta_theta)
 
+        # Define the periodic boundary as the equidistance line between adjacent blades
         res = minimize_scalar(getdist, bounds=bounds, args=(r_min),method='bounded')
         rtheta_perio[0] = res.x
         rtheta_max = np.max(rtheta_blade)
@@ -98,7 +131,7 @@ class BladeMesh2D:
             res = minimize_scalar(getdist, bounds=bounds, args=(r),method='bounded')
             rtheta_perio[ir+1] = res.x
 
-
+        # Transform annular coordinates of the periodic boundaries to Cartesian coordinates.
         theta_perio_1 = rtheta_perio / r_range 
         theta_perio_2 = theta_perio_1 - self.delta_theta
         x_perio_1 = r_range * np.cos(theta_perio_1)
@@ -112,29 +145,38 @@ class BladeMesh2D:
         return 
     
     def make_mesh(self):
+        """Generate the mesh
+        """
+
+        # Construct blade geometry
         self.blade_geom.make_blade()
         self.n_blades = int(self.blade_geom.IN["N_BLADES"][0])
         self.u_blade = np.linspace(0, 1, self.n_coords)
+
+        # Apply additional refinement around trailing edge
         u_TE = np.linspace(0.4, 0.6, 100)
         u_1 = np.linspace(0.0, u_TE[0], int(0.5*self.n_coords)+1)
         u_2 = np.linspace(u_TE[-1], 1.0,int(0.5*self.n_coords)+1)
         self.u_blade = np.hstack((u_1[:-1], u_TE, u_2[1:]))
         self.XY_blade = self.blade_geom.get_coordinates(self.u_blade).T
 
+        # Size mesh according to minimum space between points along the blade surface.
         lengths_sections = np.linalg.norm(self.XY_blade[1:, :] - self.XY_blade[:-1],axis=1)
         ds_min = min(lengths_sections)
         self.mesh_size_min = ds_min
         self.mesh_size_max = self.fac_mesh_size_max * self.mesh_size_min
         self.t_bl = min(lengths_sections)
+
+        # Create periodic boundaries.
         self.MakePeriodicBoundary()
-        #self.GenerateBladeGeom()
+
+        # Calculate boundary layer offset curve.
         norm_blade = self.blade_geom.get_normals(self.u_blade).T
         XY_bl = self.XY_blade - self.t_bl*norm_blade 
-        theta_points = np.arctan2(self.XY_blade[:,1], self.XY_blade[:,0])
+
         gmsh.initialize()
         gmsh.option.setNumber("Mesh.SaveAll", 0)
         gmsh.option.setNumber("Mesh.MeshSizeMax", self.mesh_size_max)
-        #gmsh.option.setNumber("Mesh.Algorithm", 8)
         gmsh.model.add("FLUID")
         factory = gmsh.model.geo
         mesher = gmsh.model.mesh
@@ -143,8 +185,8 @@ class BladeMesh2D:
         iPoints_bl = []
         lengths_sections = []
 
+        # Create points along the blade surface and boundary layer offset.
         for i in range(len(self.XY_blade)-1):
-            j = (i + 1)
             iPoints_wall.append(factory.addPoint(self.XY_blade[i, 0],self.XY_blade[i, 1],0))
             iPoints_bl.append(factory.addPoint(XY_bl[i, 0],XY_bl[i, 1],0))
         iPoints_wall.append(iPoints_wall[0])
@@ -153,6 +195,7 @@ class BladeMesh2D:
         bl_curves = []
         wall_curves = []
 
+        # Divide curves into sections to create smooth curves.
         np_per_section = 10
         wall_pts_sections = [iPoints_wall[i:(i+np_per_section)] for i in range(0, len(iPoints_wall), np_per_section-1)]
         bl_pts_sections = [iPoints_bl[i:(i+np_per_section)] for i in range(0, len(iPoints_wall), np_per_section-1)]
@@ -161,7 +204,6 @@ class BladeMesh2D:
         lengths_sections = [np.sum(ds[i:(i+np_per_section)])for i in range(0, len(iPoints_wall), np_per_section-1)]
         
         for w, b in zip(wall_pts_sections, bl_pts_sections):
-            
             bl_curves.append(factory.addSpline(b))
             wall_curves.append(factory.addSpline(w))
             bl_connecting_line = factory.addLine(w[0], b[0])
@@ -169,32 +211,35 @@ class BladeMesh2D:
         bl_curvloops = []
         bl_surfs = []
         
+        # Create plane surfaces for the boundary layer refinement sections.
         for iPoint in range(len(wall_curves)):
             jPoint = (iPoint+1) % len(wall_curves)
             bl_curvloops.append(factory.addCurveLoop([-wall_curves[iPoint], -bl_connecting_curves[jPoint], bl_curves[iPoint], bl_connecting_curves[iPoint]]))
-        
-
         for c in bl_curvloops:
             bl_surfs.append(factory.addPlaneSurface([c]))
 
-        
+        # Add center point
         iPoint_rotationaxis = factory.addPoint(0,0,0)
 
+        # Place points along the periodic curves and connect with splines.
         iPoints_perio_1 = []
         iPoints_perio_2 = []
         for i in range(len(self.XY_perio_1)):
             iPoints_perio_1.append(factory.addPoint(self.XY_perio_1[i,0],self.XY_perio_1[i,1],0))
             iPoints_perio_2.append(factory.addPoint(self.XY_perio_2[i,0],self.XY_perio_2[i,1],0))
-
         periodic_curve_1 = factory.addSpline(iPoints_perio_1)
         periodic_curve_2 = factory.addSpline(iPoints_perio_2)
+
+        # Create inlet and outlet curves
         outlet_curve = factory.addCircleArc(iPoints_perio_1[0],iPoint_rotationaxis,iPoints_perio_2[0])
         inlet_curve = factory.addCircleArc(iPoints_perio_1[-1],iPoint_rotationaxis,iPoints_perio_2[-1])
 
+        # Create fluid domain plane surface
         blade_curvloop = factory.addCurveLoop([c for c in bl_curves])
         fluid_curvloop = factory.addCurveLoop([-inlet_curve, periodic_curve_2, outlet_curve, -periodic_curve_1])
         fluid_domain = factory.addPlaneSurface([fluid_curvloop, -blade_curvloop])
 
+        # Name boundary conditions
         factory.addPhysicalGroup(2, [fluid_domain] + [b for b in bl_surfs],name="fluid")
         factory.addPhysicalGroup(1, [inlet_curve],name="inflow")
         factory.addPhysicalGroup(1, [outlet_curve],name="outflow")
@@ -202,18 +247,21 @@ class BladeMesh2D:
         factory.addPhysicalGroup(1, [periodic_curve_1], name="periodic2")
         factory.addPhysicalGroup(1, [periodic_curve_2], name="periodic1")
 
-        ghost_ref_pts = self.apply_refinement("mach_grad_contours.csv",factory)
-        factory.synchronize()
+        threshold_fields = []
+        # Additional refinement around user-defined points
+        if self._additional_refinement:
+            ghost_ref_pts = self.apply_refinement(self._ref_pt_file_name,factory)
+            factory.synchronize()
 
-        
-
-        dist_field_2 = mesher.field.add("Distance")
-        mesher.field.setNumbers(dist_field_2, "PointsList", ghost_ref_pts)
-        threshold_field_2 = mesher.field.add("Threshold")
-        mesher.field.setNumber(threshold_field_2, "InField", dist_field_2)
-        mesher.field.setNumber(threshold_field_2, "SizeMin", self.mesh_size_min)
-        mesher.field.setNumber(threshold_field_2, "SizeMax", self.mesh_size_max)
-
+            dist_field_2 = mesher.field.add("Distance")
+            mesher.field.setNumbers(dist_field_2, "PointsList", ghost_ref_pts)
+            threshold_field_2 = mesher.field.add("Threshold")
+            threshold_fields.append(threshold_field_2)
+            mesher.field.setNumber(threshold_field_2, "InField", dist_field_2)
+            mesher.field.setNumber(threshold_field_2, "SizeMin", self.mesh_size_min)
+            mesher.field.setNumber(threshold_field_2, "SizeMax", self.mesh_size_max)
+        else:
+            factory.synchronize()
 
         mesher.field.setNumber(threshold_field_2, "DistMin", 1.5e-4)
         mesher.field.setNumber(threshold_field_2, "DistMax", 2e-3)
@@ -221,6 +269,7 @@ class BladeMesh2D:
         dist_field_perio = mesher.field.add("Distance")
         mesher.field.setNumbers(dist_field_perio, "PointsList", iPoints_perio_1 + iPoints_perio_2)
         threshold_field_perio = mesher.field.add("Threshold")
+        threshold_fields.append(threshold_field_perio)
         mesher.field.setNumber(threshold_field_perio, "InField", dist_field_perio)
         mesher.field.setNumber(threshold_field_perio, "SizeMin", 0.3*self.mesh_size_max)
         mesher.field.setNumber(threshold_field_perio, "SizeMax", self.mesh_size_max)
@@ -228,10 +277,10 @@ class BladeMesh2D:
         mesher.field.setNumber(threshold_field_perio, "DistMax", 5e-4)
 
         out_field = mesher.field.add("Min")
-        mesher.field.setNumbers(out_field, "FieldsList", [threshold_field_perio, threshold_field_2])
+        mesher.field.setNumbers(out_field, "FieldsList", threshold_fields)
         mesher.field.setAsBackgroundMesh(out_field)
 
-
+        # Structured mesh segments for boundary layer refinement region.
         for i_segment in range(len(wall_curves)):
             l_segment = lengths_sections[i_segment]
             numNodes = int(l_segment / self.mesh_size_min)+1
@@ -246,8 +295,8 @@ class BladeMesh2D:
             jPoint = (iPoint + 1) % len(wall_pts_sections)
             mesher.setTransfiniteSurface(b, cornerTags=[wall_pts_sections[iPoint][0], wall_pts_sections[jPoint][0], bl_pts_sections[jPoint][0], bl_pts_sections[iPoint][0]])
             mesher.setRecombine(2, b)
-
         mesher.setRecombine(2, fluid_domain)
+
         gmsh.option.setNumber("Mesh.Algorithm", 8)
         mesher.generate(2)
         gmsh.fltk.run()
@@ -256,6 +305,15 @@ class BladeMesh2D:
         return 
 
     def apply_refinement(self, refinement_pts_file:str, factory:gmsh.model.geo):
+        """Apply additional refinement around user-defined points
+
+        :param refinement_pts_file: file containing coordinates where refinement should be applied
+        :type refinement_pts_file: str
+        :param factory: gmesh geometry factory
+        :type factory: gmsh.model.geo
+        :return: IDs of refinement points
+        :rtype: list[int]
+        """
         xyz_ref_pts = np.loadtxt(refinement_pts_file,delimiter=',',skiprows=1)[::3, :2]
         
         ref_pts = []
@@ -270,5 +328,11 @@ class BladeMesh2D:
             ghost_ref_pts += [b[1] for b in bl_points_plus_delta]
         return ghost_ref_pts
 
+    def SetRefinementPts(self, file_name_in:str):
+        self._ref_pt_file_name = file_name_in
+        self._additional_refinement = True 
+        return 
+    
 b = BladeMesh2D("ORCHID_stator_base_ParaBlade.cfg")
+b.SetRefinementPts("mach_grad_contours.csv")
 b.make_mesh()

@@ -1,16 +1,30 @@
+
+#!/usr/bin/env python3
+
+########################## FILE NAME: 1:generate_mesh_gmsh.py #################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Generate the 2D mesh used for shape optimization of the annular ORCHID stator blade.        |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
+
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import gmsh 
-from scipy.interpolate import interp1d
-from scipy.optimize import minimize_scalar, Bounds,root
+from scipy.optimize import root
 
 #---------------------------------------------------------------------------------------------#
 # Importing general packages
 #---------------------------------------------------------------------------------------------#
-import sys
 import os
-import time
 import copy
 #---------------------------------------------------------------------------------------------#
 # Importing ParaBlade classes and functions
@@ -54,7 +68,6 @@ for i_surf in range(len(sens_surf_AD)):
     u_coarse = u_range_coarse[np.argmin(dist)]
     
     bounds = (-1./10, 1./10)
-    #res = minimize_scalar(GetDist, args=(u_coarse, x,y),tol=1e-20)
     res = root(GetDist, x0=0.0,args=(u_coarse, x,y),tol=1e-30)
     vals_u_surf[i_surf] = (res.x + u_coarse) % 1.0
 
@@ -128,7 +141,6 @@ for v in var_labels:
         sens_vars_FD_CP.append(0)
 
     
-#print(" && ".join("cd plus_%s/CoolProp/ && ln -sf restart_JST_CoolProp.dat solution_JST.dat && cd ../.." % v for v in var_labels))
 var_labels = [v.replace("thickness_upper", "U") for v in var_labels]
 var_labels = [v.replace("thickness_lower", "L") for v in var_labels]
 var_labels[var_labels.index("chord_axial_0")] = "c"
@@ -144,9 +156,9 @@ w = 0.8
 w_bar = w / (N) 
 fig, axs = plt.subplots(ncols=1,nrows=2,figsize=[12,8])
 ax = axs[0]
-ax.bar(x=x_vars+ (0.5 + 2)*w_bar - 0.5*w, height=sens_vars,width=w_bar,zorder=3,color=color_AD,label="PINN AD")
-ax.bar(x=x_vars+ (0.5 + 1)*w_bar - 0.5*w, height=sens_vars_FD,width=w_bar,zorder=3,color=color_FD,label="PINN FD")
-ax.bar(x=x_vars+ (0.5 + 0)*w_bar - 0.5*w, height=sens_vars_FD_CP,width=w_bar,zorder=3,color=color_FD_CP,label="CP FD")
+ax.bar(x=x_vars+ (0.5 + 2)*w_bar - 0.5*w, height=sens_vars,width=w_bar,zorder=3,color=color_AD,label="EEoS AD")
+ax.bar(x=x_vars+ (0.5 + 1)*w_bar - 0.5*w, height=sens_vars_FD,width=w_bar,zorder=3,color=color_FD,label="EEoS FD")
+ax.bar(x=x_vars+ (0.5 + 0)*w_bar - 0.5*w, height=sens_vars_FD_CP,width=w_bar,zorder=3,color=color_FD_CP,label="HEoS FD")
 ax.set_xticks(x_vars, var_labels)
 ax.tick_params(which='both',labelsize=20)
 ax.grid()

@@ -1,15 +1,28 @@
+#!/usr/bin/env python3
+
+######################### FILE NAME: 3:geometry_perturbation_FD.py ############################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Perturb blade geometry for each CAD parameter to calculate the sensitivities with           |
+# finite-differences.                                                                         |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
+
 import numpy as np
-import matplotlib.pyplot as plt
-import gmsh 
-from scipy.interpolate import interp1d
-from scipy.optimize import minimize_scalar, Bounds,root
+from scipy.optimize import root
 
 #---------------------------------------------------------------------------------------------#
 # Importing general packages
 #---------------------------------------------------------------------------------------------#
-import sys
 import os
-import time
 import copy
 #---------------------------------------------------------------------------------------------#
 # Importing ParaBlade classes and functions
@@ -18,11 +31,8 @@ from common.common_utils import *
 from common.config_utils import *
 from src.blade_geom_2D import BladeGeom2D
 
+# Read surface sensitivities.
 surface_sens_filename="Base/DOT/surface_sensitivity.csv"
-IN = read_user_input("ORCHID_stator_base_ParaBlade.cfg")
-blade = BladeGeom2D(IN)
-blade.make_blade()
-
 with open(surface_sens_filename,'r') as fid:
     vars_sens_file = fid.readline().strip().split(",")
     vars_sens_file = [v.strip("\"") for v in vars_sens_file]
@@ -30,6 +40,12 @@ sens_surf_AD = np.loadtxt(surface_sens_filename,delimiter=',',skiprows=1)
 x_surf, y_surf = sens_surf_AD[:, vars_sens_file.index("x")],sens_surf_AD[:, vars_sens_file.index("y")]
 iPoint_surf = sens_surf_AD[:,0]
 
+# Create ParaBlade geometry.
+IN = read_user_input("ORCHID_stator_base_ParaBlade.cfg")
+blade = BladeGeom2D(IN)
+blade.make_blade()
+
+# Find the parameterized coordinates corresponding to the mesh surface coordinates.
 u_range_coarse = np.linspace(0, 1, 100)
 xy_blade_coarse = blade.get_coordinates(u_range_coarse).T
 
@@ -52,34 +68,36 @@ for i_surf in range(len(sens_surf_AD)):
 xy_fitted = blade.get_coordinates(vals_u_surf).T
 sens_cad_all = blade.get_sensitivity(vals_u_surf)
 
+# Read surface sensitivities and objective function value of base design.
 sens_AD = sens_surf_AD[:, [vars_sens_file.index("Sensitivity_x"),vars_sens_file.index("Sensitivity_y")]]
-
 val_obj_ref = np.loadtxt("Base/DIRECT/history_direct_JST_rr.csv",delimiter=',',skiprows=1)[-1,-1]
 
+# Create a folder for each CAD parameter for finite-difference analysis.
 cdir = os.getcwd()
 for dv_name, dv_val in zip(blade.DVs_values.keys(), blade.DVs_values.values()):
     for iDv in range(len(dv_val)):
         dv_name_full = "%s_%i" % (dv_name, iDv)
         try:
-            
             sens_cad = sens_cad_all[dv_name_full].T
-
             IN_n = copy.deepcopy(IN)
+            # Increase DV value by 0.01%
             IN_n[dv_name][iDv] *= 1.0001
             delta_dv = IN_n[dv_name][iDv] - IN[dv_name][iDv]
 
+            # Update blade coordinates according to perturbed surface coordinates.
             x_blade_n = sens_surf_AD[:, vars_sens_file.index("x")] + sens_cad[:,0]*delta_dv 
             y_blade_n = sens_surf_AD[:, vars_sens_file.index("y")] + sens_cad[:,1]*delta_dv 
             
             if not os.path.isdir("%s/plus_%s" % (os.getcwd(), dv_name_full)):
                 os.mkdir("%s/plus_%s" % (os.getcwd(), dv_name_full))
             
+            # Write perturbed coordinates for mesh deformation.
             fid = open("%s/plus_%s/MoveSurface.dat" % (os.getcwd(), dv_name_full), "w+")
             for i in range(len(x_blade_n)):
                 fid.write("%i\t%+.16e\t%+.16e\t%+.16e\n" % (iPoint_surf[i], x_blade_n[i],y_blade_n[i],0.0))
             fid.close()
 
-            
+            # Create folders for each perturbed CAD parameter and prepare SU2 configuration files.
             sens_dot = np.sum(sens_cad*sens_AD)
             blade.update_DVs_values(IN)
             blade.make_blade()
