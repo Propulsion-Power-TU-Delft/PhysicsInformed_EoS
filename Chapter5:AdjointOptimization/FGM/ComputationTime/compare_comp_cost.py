@@ -1,9 +1,28 @@
+#!/usr/bin/env python3
+
+############################## FILE NAME: generate_mesh.py ####################################
+#=============================================================================================#
+# author: Evert Bunschoten                                                                    |
+#    :PhD Candidate ,                                                                         |
+#    :Flight Power and Propulsion                                                             |
+#    :TU Delft,                                                                               |
+#    :The Netherlands                                                                         |
+#                                                                                             |
+#                                                                                             |
+# Description:                                                                                |
+# Evaluate the average iteration time for adjoint and direct simulations with and without     |
+# using a data-driven fluid model.                                                            |
+#                                                                                             |  
+#                                                                                             |
+#=============================================================================================#
 import numpy as np 
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 mpl.rcParams['mathtext.fontset'] = 'cm'
 mpl.rcParams['mathtext.rm'] = 'Times New Roman'
 plt.rcParams["font.family"] = "Times New Roman"
+
+# Load convergence history files from direct and adjoint simulations
 hist_file_direct_FGM = "Direct/history_fluid_0.csv"
 hist_file_direct_noFGM = "Direct_IGL/history_fluid_0.csv"
 hist_file_adjoint_FGM = "Adjoint/history_adj_fluid_0.csv"
@@ -14,6 +33,7 @@ H_adjoint_FGM = np.loadtxt(hist_file_adjoint_FGM,delimiter=',',skiprows=1)
 H_direct_noFGM = np.loadtxt(hist_file_direct_noFGM,delimiter=',',skiprows=1)
 H_adjoint_noFGM = np.loadtxt(hist_file_adjoint_noFGM,delimiter=',',skiprows=1)
 
+# Evaluate the average iteration time and standard devaiation of the last 100 iterations
 t_direct_FGM = H_direct_FGM[-100:,0]
 t_adjoint_FGM = H_adjoint_FGM[-100:,0]
 t_direct_noFGM = H_direct_noFGM[-100:,0]
