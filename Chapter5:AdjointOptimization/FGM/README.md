@@ -29,3 +29,8 @@ Step 3: Optimization
 
 The optimization is initialized by running the script [optimization.py](optimization.py). The optimization is performed using the FADO framework within SU2 commonly used for optimization. The optimization algorithm is SLSQP and sensitivities are calculated with the discrete adjoint solver. During each design iteration, a folder is created titled ```DSN_*``` in which the solution of the direct solver is stored in the folder ```DIRECT``` and the solutions of the adjoint in ```ADJOINT```. The sensitivities are stored in the file ```of_grad.csv``` in the folder ```DOT```. 
 The convergence history of the optimization is documented in the file [hist_slsqp.csv](hist_slsqp.csv), which was updated for every iteration of the SLSQP algorithm (excluding line searches) with the value of the objective function, the constraint function, and the values of the design parameters. The optimization results can be accessed by inflating the compressed zip file titled *OptimizationResults.zip* which can be accessed through the 4TU reserach data repository.
+
+Step 4: Computational Cost Assessment
+-------------------------------------
+
+The computational cost of the direct and adjoint solver were compared between using the ML-FGM and the ideal gas law without thermochemistry by evaluating the average iteration time and the runtime memory requirement of the solution process. The methods used to obtain these results are found in the folder *ComputationTime* which can be downloaded as a compressed zip folder from the 4TU research data repository.
