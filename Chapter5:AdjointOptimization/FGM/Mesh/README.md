@@ -23,3 +23,4 @@ SU2_DEF master.cfg
 ```
 SU2 will read the three single-zone mesh files and combine them into a multi-zone mesh and associate the FFD boxes with the CHT inerfaces of the burner and heat exchanger. 
 
+The single zone and multi-zone mesh files can also be downloaded from the 4TU research data repository.
