@@ -1,22 +1,50 @@
-Methods for Chapter 2: Modeling hydrogen flames with physics-informed neural networks
-=====================================================================================
+Laminar Hydrogen Flamelet Generated Manifold with Deep, Dense Multilayer Perceptrons
+====================================================================================
 
 Author: Evert Bunschoten
 
-Requires: SU2, SU2 DataMiner
+Requires: [SU2](https://github.com/su2code/SU2.git), [SU2 DataMiner](https://github.com/EvertBunschoten/SU2_DataMiner.git)
 
-The scripts in this folder explain the research methodologies presented in Chapter 2 of the dissertation. 
+The scripts in this folder explain the methods used to set up a flamelet-generated manifold (FGM) simulation from scratch for laminar, premixed, nonadiabatic hydrogen flames in SU2. The thermochemical states are evaluated during the simulation by deep, dense, single-task multilayer perceptrons that are trained on thermochemical state data from one-dimensional detailed chemistry solutions (flamelets) using physics-informed machine learning techniques to improve thermochemical consistency. The flamelet data generation, preparation of the training data, and the training of the MLPs is done using [SU2 DataMiner](https://github.com/EvertBunschoten/SU2_DataMiner.git), mesh generation with GMesh, and the simulations are carried out with [SU2](https://github.com/su2code/SU2.git). 
+The formulation of the hydrogen FGM model, the machine learning process, and the implementation of the FGM model in SU2 are elaborated upon in Chapter 2 of the doctoral dissertation of E.Bunschoten titled *Consistent Data-Driven Equations of State for Reacting and Nonideal Compressible Fluids*. The data generated during each step can also be downloaded from the [4TU research data repository](https://doi.org/10.4121/8f48f751-d0be-46ea-af3c-7895d9ad46af.v1).
 
-Step 0: Install SU2 DataMiner and set up environment.
------------------------------------------------------
+Step 0: Acquire and Set Up SU2 and SU2 DataMiner
+------------------------------------------------
 
-The generation of flamelet data and the training of the networks in the ML-DDEoS model were done with SU2 DataMiner. Install SU2 DataMiner according to the installation instructions and install all the necessary python packages.
+SU2 DataMiner is an open-source Python-based software library for data-driven equation of state (DDEoS) applications. SU2 DataMiner was developed for Linux-OS and requires several Python modules to function and it is recommended to set up a dedicated Python environment. The following programs are required to set up SU2 DataMiner:
+* Python 3.10 or newer
+* python3-virtualenv
+* python3.*-venv
 
-To run the FGM simulations, install SU2 and add the ```-Dwith-mlpcpp=True``` when running ```meson.py``` to enable the use of multi-layer perceptrons in SU2. 
+After installing Python and the tools for setting up virtual environments, use the following commands to install SU2 DataMiner and set up the Python environment:
+```
+git clone https://github.com/EvertBunschoten/SU2_DataMiner.git <INSTALL_DIR>
+cd <INSTALL_DIR>
+python3 -m venv ./su2dm_env
+virtualenv -p /usr/bin/python3 ./su2dm_env
+. ./su2dm_env/bin/activate
+python3 -m pip install -r requirements.txt
+```
+where ```<INSTALL_DIR>``` is the desired installation location for the SU2 DataMiner source code. After installing the required Python packages, update the environment variables through 
+```
+export SU2DATAMINER_HOME="<INSTALL_DIR>"
+export PYTHONPATH=$PYTHONPATH:$SU2DATAMINER_HOME
+export PATH=$PATH:$SU2DATAMINER_HOME/bin
+```
+in your ```.bashrc``` to access the SU2 DataMiner modules from anywhere.
 
-Step 1: Generate configuration
-------------------------------
 
+To set up and install SU2, follow the [general installation instructions](https://su2code.github.io/docs/Installation/) and configure and install SU2 through the following commands:
+```
+meson.py build -Dwith-mlpcpp=True
+./ninja -C build install
+```
+The flag ```-Dwith-mlpcpp=True``` will download the [MLPCpp submodule](https://github.com/EvertBunschoten/MLPCpp.git) which enables SU2 to use deep, dense multilayer perceptrons for DDEoS applications.
+
+Step 1: Generate SU2 DataMiner Configuration
+--------------------------------------------
+
+All the steps in the
 Information about the flamelet manifold, the definition of the progress variable, and the network hyperparameters are stored in the SU2 DataMiner configuration class. To generate the configuration used throughout the research presented in this chapter, run the script [0:generate_config.py](0:generate_config.py). 
 
 Running this script generates the configuration file named *config_PIML.cfg* and displays information on the flamelet manifold in the terminal.
